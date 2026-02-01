@@ -6,9 +6,9 @@ Use Axios or the Fetch API to send the user's credentials to the backend.
 
 Endpoint: POST /login
 
-Example Request (using Axios):
-
 JavaScript
+```
+// Example Request (using Axios):
 import axios from 'axios';
 
 const handleLogin = async (email, password) => {
@@ -25,6 +25,6 @@ const handleLogin = async (email, password) => {
     console.error("Login failed:", error.response.data.detail);
   }
 };
-
+```
 Important Note on CORS:
 The backend is currently configured to allow requests from http://localhost:3000 (React's default port). If you run your frontend on a different port, you need to update the allowed origins in backend/main.py.
