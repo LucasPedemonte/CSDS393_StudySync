@@ -1,4 +1,5 @@
 import { useState } from "react";
+import axios from "axios";
 import "./LoginPage.css";
 
 const LoginPage = () => {
@@ -15,10 +16,32 @@ const LoginPage = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert(isLogin ? "Logging in..." : "Signing up...");
+
+    try {
+      if (isLogin) {
+        const res = await axios.post("http://127.0.0.1:8000/login", {
+          email: formData.email,
+          password: formData.password,
+        });
+
+        console.log("Login success:", res.data);
+        alert(`Welcome ${res.data.user} (${res.data.role})`);
+      } else {
+        // You don’t have a /signup endpoint yet, so just placeholder:
+        alert("Signup not implemented yet (need a /signup endpoint).");
+      }
+    } catch (err) {
+      console.error(err);
+
+      // Good error message from FastAPI (e.g. "Invalid email or password")
+      const msg =
+        err?.response?.data?.detail || "Login failed. Check console.";
+      alert(msg);
+    }
   };
+
 
   return (
     <div className="page">
