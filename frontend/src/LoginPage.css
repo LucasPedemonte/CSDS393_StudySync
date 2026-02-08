@@ -470,11 +470,12 @@ body {
     padding: 48px 32px 32px;
   }
 
-  .right-panel {
-    flex: none;
-    padding: 0 32px 48px;
-    justify-content: flex-start;
-  }
+ .right-panel {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;    /* vertical centering */
+  justify-content: center; /* horizontal centering */
+}
 
   .tagline {
     font-size: 34px;
