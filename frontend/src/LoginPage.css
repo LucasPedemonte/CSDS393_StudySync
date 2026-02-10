@@ -34,6 +34,18 @@ body {
   position: relative;
 }
 
+/* Pages with navbar need column layout */
+.page.with-navbar {
+  flex-direction: column;
+}
+
+.page-content {
+  display: flex;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+}
+
 /* --- Ambient background blobs --- */
 .blob {
   position: absolute;
@@ -470,13 +482,113 @@ body {
     padding: 48px 32px 32px;
   }
 
-  .right-panel {
-    flex: none;
-    padding: 0 32px 48px;
-    justify-content: flex-start;
-  }
+ .right-panel {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;    /* vertical centering */
+  justify-content: center; /* horizontal centering */
+}
 
   .tagline {
     font-size: 34px;
+  }
+}
+
+/* --- Home Page Grid Layout --- */
+.home-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 60px 32px;
+  position: relative;
+  z-index: 1;
+}
+
+.home-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  width: 100%;
+  max-width: 800px;
+}
+
+.home-card {
+  background: var(--navy-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 32px 28px;
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+.home-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--teal);
+  box-shadow: 0 16px 48px rgba(45, 212, 191, 0.25);
+}
+
+.home-card-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  filter: grayscale(0.2);
+  transition: transform 0.3s;
+}
+
+.home-card:hover .home-card-icon {
+  transform: scale(1.1);
+}
+
+.home-card-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.home-card-description {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .home-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .home-content {
+    padding: 40px 20px;
+  }
+
+  .home-card {
+    padding: 28px 24px;
+  }
+
+  .home-card-icon {
+    font-size: 40px;
+  }
+
+  .home-card-title {
+    font-size: 20px;
   }
 }
