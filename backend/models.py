@@ -1,11 +1,20 @@
 from database import Base
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, DateTime, Enum
+import datetime
+import enum
+
+class UserRole(str, enum.Enum):
+    STUDENT = "Student"
+    TA = "TA"
+    ADMIN = "Admin"
 
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, primary_key=True, index=True)
+    firebase_uid = Column(String, unique=True, index=True, nullable=False)
+    email = Column(String, unique=True, index=True, nullable=False)
     full_name = Column(String)
-    email = Column(String, unique=True, index=True)
-    password_hash = Column(String) # We will use plain text for Demo 1, then JWT later
-    role = Column(String, default="student") # student, TA, or admin
+    role = Column(String, default="Student") # Or use Enum(UserRole)
+    google_calendar_token = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)

@@ -592,3 +592,34 @@ body {
     font-size: 20px;
   }
 }
+.role-card {
+  text-align: center;
+  padding: 40px;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.role-options {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 25px;
+}
+
+.role-btn {
+  width: 100%;
+  justify-content: center;
+  padding: 15px !important;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+  font-size: 1rem;
+}
+
+.role-btn:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

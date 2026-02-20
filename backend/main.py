@@ -23,16 +23,40 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class LoginRequest(BaseModel):
+class UserCreate(BaseModel):
+    firebase_uid: str
     email: str
-    password: str
+    full_name: str
+    role: str
 
-@app.post("/login")
-def login(request: LoginRequest, db: Session = Depends(get_db)):
-    # 3. Look for the user in the database Ohta will manage 
-    user = db.query(models.User).filter(models.User.email == request.email).first()
+@app.post("/sync-user")
+def sync_user(user_data: UserCreate, db: Session = Depends(get_db)):
+    # 1. Check if user already exists in PostgreSQL by Firebase UID
+    db_user = db.query(models.User).filter(models.User.firebase_uid == user_data.firebase_uid).first()
     
-    if not user or user.password_hash != request.password:
-        raise HTTPException(status_code=400, detail="Invalid email or password")
+    if db_user:
+        # User is already synced; return their existing data
+        return {
+            "status": "exists", 
+            "message": "User already in database",
+            "user": {
+                "full_name": db_user.full_name,
+                "role": db_user.role
+            }
+        }
     
-    return {"status": "success", "user": user.full_name, "role": user.role}
+    # 2. Create new user in PostgreSQL if they don't exist
+    try:
+        new_user = models.User(
+            firebase_uid=user_data.firebase_uid,
+            email=user_data.email,
+            full_name=user_data.full_name,
+            role=user_data.role
+        )
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        return {"status": "success", "user": new_user.full_name, "role": new_user.role}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")

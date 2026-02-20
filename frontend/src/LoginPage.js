@@ -17,6 +17,12 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+
+  // --- NEW STATES FOR DATABASE SYNC ---
+  const [showRoleSelection, setShowRoleSelection] = useState(false);
+  const [tempUser, setTempUser] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -28,62 +34,78 @@ const LoginPage = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-      e.preventDefault();
-
-      try {
-        if (isLogin) {
-    const userCred = await signInWithEmailAndPassword(
-      auth,
-      formData.email,
-      formData.password
-    );
-
-    navigate("/home");  
+  // --- NEW SYNC FUNCTION ---
+  const syncWithBackend = async (user, role, name) => {
+    try {
+      const response = await fetch("http://localhost:8000/sync-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firebase_uid: user.uid,
+          email: user.email,
+          full_name: name || user.displayName || "New User",
+          role: role,
+        }),
+      });
+      if (response.ok) {
+        navigate("/home");
       } else {
-        const userCred = await createUserWithEmailAndPassword(
-          auth,
-          formData.email,
-          formData.password
-        );
-
-        // Save the "name" into the user's Firebase Auth profile
-        if (formData.name?.trim()) {
-          await updateProfile(userCred.user, {
-            displayName: formData.name.trim(),
-          });
-        }
-
-        alert(`Account created for ${formData.name || userCred.user.email}`);
-        navigate("/home");  
+        const data = await response.json();
+        alert(data.detail || "Database sync failed.");
       }
     } catch (err) {
-      console.error(err);
-
-      const code = err?.code || "";
-      const friendly =
-        code === "auth/invalid-credential"
-          ? "Invalid email or password."
-          : code === "auth/user-not-found"
-          ? "No account found for that email."
-          : code === "auth/wrong-password"
-          ? "Wrong password."
-          : code === "auth/email-already-in-use"
-          ? "That email is already in use."
-          : code === "auth/weak-password"
-          ? "Password is too weak (try 6+ chars)."
-          : err?.message || "Auth failed.";
-
-      alert(friendly);
+      console.error("Backend error:", err);
+      alert("Could not connect to the server.");
     }
   };
+
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  setErrorMessage(""); // Clear any old errors when trying again
+
+  try {
+    if (isLogin) {
+      const userCred = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+      await syncWithBackend(userCred.user, "Student", formData.name);
+    } else {
+      const userCred = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      if (formData.name?.trim()) {
+        await updateProfile(userCred.user, { displayName: formData.name.trim() });
+      }
+      setTempUser(userCred.user);
+      setShowRoleSelection(true);
+    }
+  } catch (err) {
+    console.error(err);
+    const code = err?.code || "";
+
+    // If they already exist in Firebase but Postgres failed last time:
+    if (code === "auth/email-already-in-use" && !isLogin) {
+      setErrorMessage("Account exists in Auth system. Please Sign In to sync your profile.");
+      // Option: Automatically switch them to login after a delay or let them click
+      return;
+    }
+
+    // Mapping the rest of your friendly errors to the state
+    const friendly =
+      code === "auth/invalid-credential" ? "Invalid email or password." :
+      code === "auth/user-not-found" ? "No account found for that email." :
+      code === "auth/wrong-password" ? "Wrong password." :
+      code === "auth/email-already-in-use" ? "That email is already in use." :
+      code === "auth/weak-password" ? "Password is too weak (try 6+ chars)." :
+      err?.message || "Auth failed.";
+
+    setErrorMessage(friendly);
+  }
+};
 
   const handleGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
       const userCred = await signInWithPopup(auth, provider);
-      alert(`Welcome ${userCred.user.displayName || userCred.user.email}`);
-      navigate("/home");
+      // Trigger role selection for Google sign-in to ensure they are in PostgreSQL
+      setTempUser(userCred.user);
+      setShowRoleSelection(true);
     } catch (err) {
       console.error(err);
       alert(err?.message || "Google sign-in failed.");
@@ -96,7 +118,6 @@ const LoginPage = () => {
       alert("Enter your email first, then click 'Forgot password?'.");
       return;
     }
-
     try {
       await sendPasswordResetEmail(auth, formData.email);
       alert("Password reset email sent!");
@@ -108,12 +129,10 @@ const LoginPage = () => {
 
   return (
     <div className="page">
-      {/* Ambient blobs */}
       <div className="blob blob-1" />
       <div className="blob blob-2" />
       <div className="blob blob-3" />
 
-      {/* Left — Branding */}
       <div className="left-panel">
         <div className="brand-logo">
           <div className="logo-icon">
@@ -127,17 +146,13 @@ const LoginPage = () => {
             Study<span>Sync</span>
           </div>
         </div>
-
         <h1 className="tagline">
-          Learn together,
-          <br />
+          Learn together, <br />
           <span className="highlight">grow faster.</span>
         </h1>
         <p className="tagline-sub">
-          A single workspace to sync notes, share materials, and collaborate with
-          your study group — all in real time.
+          A single workspace to sync notes, share materials, and collaborate.
         </p>
-
         <div className="features">
           <div className="feature-pill">
             <div className="dot" />
@@ -158,169 +173,199 @@ const LoginPage = () => {
         </div>
       </div>
 
-      {/* Right — Auth Card */}
       <div className="right-panel">
         <div className="card">
-          {/* Tabs */}
-          <div className="tabs">
-            <button
-              type="button"
-              className={`tab ${isLogin ? "active" : ""}`}
-              onClick={() => setIsLogin(true)}
-            >
-              Sign In
-            </button>
-            <button
-              type="button"
-              className={`tab ${!isLogin ? "active" : ""}`}
-              onClick={() => setIsLogin(false)}
-            >
-              Sign Up
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit}>
-            {/* Name field — only on sign up */}
-            {!isLogin && (
-              <div
-                className={`field ${focused === "name" ? "is-focused" : ""}`}
-              >
-                <label>Full Name</label>
-                <div className="input-wrap">
-                  <svg className="icon" viewBox="0 0 24 24">
-                    <circle cx="12" cy="8" r="4" />
-                    <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
-                  </svg>
-                  <input
-                    type="text"
-                    name="name"
-                    placeholder="Alex Johnson"
-                    value={formData.name}
-                    onChange={handleChange}
-                    onFocus={() => setFocused("name")}
-                    onBlur={() => setFocused(null)}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Email */}
-            <div className={`field ${focused === "email" ? "is-focused" : ""}`}>
-              <label>Email</label>
-              <div className="input-wrap">
-                <svg className="icon" viewBox="0 0 24 24">
-                  <rect x="2" y="4" width="20" height="16" rx="2" />
-                  <path d="M22 7l-10 6L2 7" />
-                </svg>
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="you@university.edu"
-                  value={formData.email}
-                  onChange={handleChange}
-                  onFocus={() => setFocused("email")}
-                  onBlur={() => setFocused(null)}
-                />
-              </div>
-            </div>
-
-            {/* Password */}
-            <div
-              className={`field ${focused === "password" ? "is-focused" : ""}`}
-            >
-              <label>Password</label>
-              <div className="input-wrap">
-                <svg className="icon" viewBox="0 0 24 24">
-                  <rect x="3" y="11" width="18" height="11" rx="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  placeholder={isLogin ? "••••••••" : "Create a password"}
-                  value={formData.password}
-                  onChange={handleChange}
-                  onFocus={() => setFocused("password")}
-                  onBlur={() => setFocused(null)}
-                />
+          {!showRoleSelection ? (
+            <>
+              <div className="tabs">
                 <button
                   type="button"
-                  className="toggle-pw"
-                  onClick={() => setShowPassword(!showPassword)}
+                  className={`tab ${isLogin ? "active" : ""}`}
+                  onClick={() => setIsLogin(true)}
                 >
-                  {showPassword ? (
-                    <svg viewBox="0 0 24 24">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
-                      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
-                      <line x1="1" y1="1" x2="23" y2="23" />
+                  Sign In
+                </button>
+                <button
+                  type="button"
+                  className={`tab ${!isLogin ? "active" : ""}`}
+                  onClick={() => setIsLogin(false)}
+                >
+                  Sign Up
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmit}>
+                {!isLogin && (
+                  <div
+                    className={`field ${focused === "name" ? "is-focused" : ""}`}
+                  >
+                    <label>Full Name</label>
+                    <div className="input-wrap">
+                      <svg className="icon" viewBox="0 0 24 24">
+                        <circle cx="12" cy="8" r="4" />
+                        <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
+                      </svg>
+                      <input
+                        type="text"
+                        name="name"
+                        placeholder="Alex Johnson"
+                        value={formData.name}
+                        onChange={handleChange}
+                        onFocus={() => setFocused("name")}
+                        onBlur={() => setFocused(null)}
+                      />
+                    </div>
+                  </div>
+                )}
+                <div
+                  className={`field ${focused === "email" ? "is-focused" : ""}`}
+                >
+                  <label>Email</label>
+                  <div className="input-wrap">
+                    <svg className="icon" viewBox="0 0 24 24">
+                      <rect x="2" y="4" width="20" height="16" rx="2" />
+                      <path d="M22 7l-10 6L2 7" />
                     </svg>
-                  ) : (
-                    <svg viewBox="0 0 24 24">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                      <circle cx="12" cy="12" r="3" />
+                    <input
+                      type="email"
+                      name="email"
+                      placeholder="you@university.edu"
+                      value={formData.email}
+                      onChange={handleChange}
+                      onFocus={() => setFocused("email")}
+                      onBlur={() => setFocused(null)}
+                    />
+                  </div>
+                </div>
+                <div
+                  className={`field ${focused === "password" ? "is-focused" : ""}`}
+                >
+                  <label>Password</label>
+                  <div className="input-wrap">
+                    <svg className="icon" viewBox="0 0 24 24">
+                      <rect x="3" y="11" width="18" height="11" rx="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                     </svg>
-                  )}
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      placeholder={isLogin ? "••••••••" : "Create a password"}
+                      value={formData.password}
+                      onChange={handleChange}
+                      onFocus={() => setFocused("password")}
+                      onBlur={() => setFocused(null)}
+                    />
+                  </div>
+                </div>
+                {isLogin && (
+                  <div className="forgot">
+                    <a href="#" onClick={handleForgotPassword}>
+                      Forgot password?
+                    </a>
+                  </div>
+                )}
+                {errorMessage && (
+                  <div
+                    className="error-text"
+                    style={{
+                      color: "#ff4d4d",
+                      fontSize: "0.85rem",
+                      marginBottom: "15px",
+                      textAlign: "center",
+                      fontWeight: "500",
+                    }}
+                  >
+                    {errorMessage}
+                  </div>
+                )}
+
+                <button type="submit" className="btn-submit">
+                  {isLogin ? "Sign In" : "Create Account"}
+                </button>
+              </form>
+
+              <div className="divider">
+                <div className="divider-line" />
+                <span>or</span>
+                <div className="divider-line" />
+              </div>
+              <button
+                className="btn-google"
+                type="button"
+                onClick={handleGoogle}
+              >
+                Continue with Google
+              </button>
+
+              <div className="auth-footer">
+                {isLogin ? (
+                  <>
+                    Don't have an account?{" "}
+                    <a onClick={() => setIsLogin(false)}>Sign up</a>
+                  </>
+                ) : (
+                  <>
+                    Already have an account?{" "}
+                    <a onClick={() => setIsLogin(true)}>Sign in</a>
+                  </>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="role-selection">
+              <h2 className="highlight">One Last Step!</h2>
+              <p className="tagline-sub">
+                Are you a Student, TA, or Administrator?
+              </p>
+              <div
+                className="role-options"
+                style={{
+                  marginTop: "20px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
+                }}
+              >
+                <button
+                  className="feature-pill"
+                  style={{
+                    cursor: "pointer",
+                    width: "100%",
+                    justifyContent: "center",
+                  }}
+                  onClick={() =>
+                    syncWithBackend(tempUser, "Student", formData.name)
+                  }
+                >
+                  <div className="dot" /> Student
+                </button>
+                <button
+                  className="feature-pill"
+                  style={{
+                    cursor: "pointer",
+                    width: "100%",
+                    justifyContent: "center",
+                  }}
+                  onClick={() => syncWithBackend(tempUser, "TA", formData.name)}
+                >
+                  <div className="dot" /> Teaching Assistant
+                </button>
+                <button
+                  className="feature-pill"
+                  style={{
+                    cursor: "pointer",
+                    width: "100%",
+                    justifyContent: "center",
+                  }}
+                  onClick={() =>
+                    syncWithBackend(tempUser, "Admin", formData.name)
+                  }
+                >
+                  <div className="dot" /> Administrator
                 </button>
               </div>
             </div>
-
-            {/* Forgot (login only) */}
-            {isLogin && (
-              <div className="forgot">
-                <a href="#" onClick={handleForgotPassword}>
-                  Forgot password?
-                </a>
-              </div>
-            )}
-
-            <button type="submit" className="btn-submit">
-              {isLogin ? "Sign In" : "Create Account"}
-            </button>
-          </form>
-
-          {/* Google sign-in */}
-          <div className="divider">
-            <div className="divider-line" />
-            <span>or</span>
-            <div className="divider-line" />
-          </div>
-
-          <button className="btn-google" type="button" onClick={handleGoogle}>
-            <svg viewBox="0 0 24 24" fill="none">
-              <path
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                fill="#4285F4"
-              />
-              <path
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                fill="#34A853"
-              />
-              <path
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                fill="#FBBC05"
-              />
-              <path
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                fill="#EA4335"
-              />
-            </svg>
-            Continue with Google
-          </button>
-
-          {/* Footer toggle */}
-          <div className="auth-footer">
-            {isLogin ? (
-              <>
-                Don't have an account?{" "}
-                <a onClick={() => setIsLogin(false)}>Sign up</a>
-              </>
-            ) : (
-              <>
-                Already have an account?{" "}
-                <a onClick={() => setIsLogin(true)}>Sign in</a>
-              </>
-            )}
-          </div>
+          )}
         </div>
       </div>
     </div>
