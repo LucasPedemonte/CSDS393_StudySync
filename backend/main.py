@@ -60,3 +60,29 @@ def sync_user(user_data: UserCreate, db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    
+@app.get("/user/{firebase_uid}")
+def get_user_profile(firebase_uid: str, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.firebase_uid == firebase_uid).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {
+        "full_name": user.full_name,
+        "email": user.email,
+        "role": user.role,
+        "gcal_connected": True if user.google_calendar_token else False
+    }
+
+@app.put("/user/{firebase_uid}/update")
+def update_user_profile(firebase_uid: str, update_data: UserCreate, db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.firebase_uid == firebase_uid).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    db_user.full_name = update_data.full_name
+    db_user.role = update_data.role
+    # Email updates in DB should usually sync with Firebase updates
+    db_user.email = update_data.email 
+    
+    db.commit()
+    return {"status": "success"}
