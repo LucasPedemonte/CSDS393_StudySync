@@ -1,0 +1,11 @@
+# Root-level safety net
+venv/
+node_modules/
+.env
+__pycache__/
+*.pyc
+
+# This ensures subfolders also stay clean if their own ignores fail
+**/venv/
+**/node_modules/
+**/__pycache__/
