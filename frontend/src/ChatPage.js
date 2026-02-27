@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
-import { onAuthStateChanged } from "firebase/auth";
 import Navbar from "./Navbar";
 import "./LoginPage.css";
-import { useState, useEffect } from "react";
 import { auth } from "./firebase";
 
 const ChatPage = () => {

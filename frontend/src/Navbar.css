@@ -85,3 +85,19 @@
     font-size: 14px;
   }
 }
+
+.navbar-logout-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #888; /* Standard grey */
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  transition: color 0.3s ease;
+}
+
+.navbar-logout-btn:hover {
+  color: var(--teal, #2dd4bf);
+}
+

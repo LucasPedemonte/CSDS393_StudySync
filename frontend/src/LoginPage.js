@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./LoginPage.css";
 import { useNavigate } from "react-router-dom";
 
@@ -11,7 +11,7 @@ import {
   sendPasswordResetEmail,
 } from "firebase/auth";
 
-import { auth } from "./firebase.js"; 
+import { auth } from "./firebase.js";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -29,6 +29,13 @@ const LoginPage = () => {
     password: "",
   });
   const [focused, setFocused] = useState(null);
+
+  useEffect(() => {
+    return () => {
+      setFormData({ name: "", email: "", password: "" });
+      setErrorMessage("");
+    };
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -58,46 +65,67 @@ const LoginPage = () => {
       alert("Could not connect to the server.");
     }
   };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErrorMessage("");
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  setErrorMessage(""); // Clear any old errors when trying again
+    try {
+      if (isLogin) {
+        const userCred = await signInWithEmailAndPassword(
+          auth,
+          formData.email,
+          formData.password,
+        );
 
-  try {
-    if (isLogin) {
-      const userCred = await signInWithEmailAndPassword(auth, formData.email, formData.password);
-      await syncWithBackend(userCred.user, "Student", formData.name);
-    } else {
-      const userCred = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-      if (formData.name?.trim()) {
-        await updateProfile(userCred.user, { displayName: formData.name.trim() });
+        await syncWithBackend(
+          userCred.user,
+          "Student",
+          userCred.user.displayName,
+        );
+      } else {
+        const userCred = await createUserWithEmailAndPassword(
+          auth,
+          formData.email,
+          formData.password,
+        );
+        if (formData.name?.trim()) {
+          await updateProfile(userCred.user, {
+            displayName: formData.name.trim(),
+          });
+        }
+        setTempUser(userCred.user);
+        setShowRoleSelection(true);
       }
-      setTempUser(userCred.user);
-      setShowRoleSelection(true);
+    } catch (err) {
+      console.error(err);
+      const code = err?.code || "";
+
+      // If they already exist in Firebase but Postgres failed last time:
+      if (code === "auth/email-already-in-use" && !isLogin) {
+        setErrorMessage(
+          "Account exists in Auth system. Please Sign In to sync your profile.",
+        );
+        // Option: Automatically switch them to login after a delay or let them click
+        return;
+      }
+
+      // Mapping the rest of your friendly errors to the state
+      const friendly =
+        code === "auth/invalid-credential"
+          ? "Invalid email or password."
+          : code === "auth/user-not-found"
+            ? "No account found for that email."
+            : code === "auth/wrong-password"
+              ? "Wrong password."
+              : code === "auth/email-already-in-use"
+                ? "That email is already in use."
+                : code === "auth/weak-password"
+                  ? "Password is too weak (try 6+ chars)."
+                  : err?.message || "Auth failed.";
+
+      setErrorMessage(friendly);
     }
-  } catch (err) {
-    console.error(err);
-    const code = err?.code || "";
-
-    // If they already exist in Firebase but Postgres failed last time:
-    if (code === "auth/email-already-in-use" && !isLogin) {
-      setErrorMessage("Account exists in Auth system. Please Sign In to sync your profile.");
-      // Option: Automatically switch them to login after a delay or let them click
-      return;
-    }
-
-    // Mapping the rest of your friendly errors to the state
-    const friendly =
-      code === "auth/invalid-credential" ? "Invalid email or password." :
-      code === "auth/user-not-found" ? "No account found for that email." :
-      code === "auth/wrong-password" ? "Wrong password." :
-      code === "auth/email-already-in-use" ? "That email is already in use." :
-      code === "auth/weak-password" ? "Password is too weak (try 6+ chars)." :
-      err?.message || "Auth failed.";
-
-    setErrorMessage(friendly);
-  }
-};
+  };
 
   const handleGoogle = async () => {
     try {
@@ -181,14 +209,22 @@ const LoginPage = () => {
                 <button
                   type="button"
                   className={`tab ${isLogin ? "active" : ""}`}
-                  onClick={() => setIsLogin(true)}
+                  onClick={() => {
+                    setIsLogin(true);
+                    setFormData({ name: "", email: "", password: "" }); // Clear fields
+                    setErrorMessage(""); // Clear old errors
+                  }}
                 >
                   Sign In
                 </button>
                 <button
                   type="button"
                   className={`tab ${!isLogin ? "active" : ""}`}
-                  onClick={() => setIsLogin(false)}
+                  onClick={() => {
+                    setIsLogin(false);
+                    setFormData({ name: "", email: "", password: "" }); // Clear fields
+                    setErrorMessage(""); // Clear old errors
+                  }}
                 >
                   Sign Up
                 </button>
@@ -242,10 +278,12 @@ const LoginPage = () => {
                 >
                   <label>Password</label>
                   <div className="input-wrap">
+                    {/* The Lock Icon */}
                     <svg className="icon" viewBox="0 0 24 24">
                       <rect x="3" y="11" width="18" height="11" rx="2" />
                       <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                     </svg>
+
                     <input
                       type={showPassword ? "text" : "password"}
                       name="password"
@@ -254,14 +292,55 @@ const LoginPage = () => {
                       onChange={handleChange}
                       onFocus={() => setFocused("password")}
                       onBlur={() => setFocused(null)}
+                      autoComplete="current-password"
                     />
+
+                    {/* The Eye Toggle Icon */}
+                    <button
+                      type="button"
+                      className="password-toggle-icon"
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
+                    >
+                      {showPassword ? (
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="20"
+                          height="20"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                          <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                      ) : (
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="20"
+                          height="20"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                          <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                      )}
+                    </button>
                   </div>
                 </div>
                 {isLogin && (
                   <div className="forgot">
-                    <a href="#" onClick={handleForgotPassword}>
+                    <button
+                      type="button"
+                      className="btn-subtle-link"
+                      onClick={handleForgotPassword}
+                    >
                       Forgot password?
-                    </a>
+                    </button>
                   </div>
                 )}
                 {errorMessage && (
@@ -301,12 +380,24 @@ const LoginPage = () => {
                 {isLogin ? (
                   <>
                     Don't have an account?{" "}
-                    <a onClick={() => setIsLogin(false)}>Sign up</a>
+                    <button
+                      type="button"
+                      className="btn-subtle-link"
+                      onClick={() => setIsLogin(false)}
+                    >
+                      Sign up
+                    </button>
                   </>
                 ) : (
                   <>
                     Already have an account?{" "}
-                    <a onClick={() => setIsLogin(true)}>Sign in</a>
+                    <button
+                      type="button"
+                      className="btn-subtle-link"
+                      onClick={() => setIsLogin(true)}
+                    >
+                      Sign in
+                    </button>
                   </>
                 )}
               </div>
