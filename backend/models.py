@@ -65,3 +65,28 @@ class Message(Base):
     # Relationships
     conversation = relationship("Conversation", back_populates="messages")
     sender = relationship("User", back_populates="messages")
+
+
+class Post(Base):
+    __tablename__ = "posts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    author_uid = Column(String, ForeignKey("users.firebase_uid"), nullable=False)
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    resource_link = Column(String, nullable=True)
+    score = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    votes = relationship("PostVote", back_populates="post", cascade="all, delete-orphan")
+
+
+class PostVote(Base):
+    __tablename__ = "post_votes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    post_id = Column(Integer, ForeignKey("posts.id"), nullable=False)
+    user_uid = Column(String, nullable=False)
+    vote = Column(Integer, nullable=False)  # 1 or -1
+
+    post = relationship("Post", back_populates="votes")
