@@ -1,437 +1,276 @@
 import { useEffect, useState } from "react";
+import { onAuthStateChanged } from "firebase/auth";
 import Navbar from "./Navbar";
 import "./LoginPage.css";
+import "./ChatPage.css";
 import { auth } from "./firebase";
 
+const ROLE_PRIORITY = {
+  Admin: 0,
+  TA: 1,
+  Student: 2,
+};
+
 const ChatPage = () => {
+  const [authUser, setAuthUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
   const [users, setUsers] = useState([]);
-  const [conversations, setConversations] = useState([]);
-  const [selectedConversation, setSelectedConversation] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
-  const [currentUser, setCurrentUser] = useState(null);
-  const [showUserList, setShowUserList] = useState(true);
-  const [groupName, setGroupName] = useState("");
-  const [selectedUsers, setSelectedUsers] = useState([]);
-  const [creatingGroup, setCreatingGroup] = useState(false);
+  const [sending, setSending] = useState(false);
 
-  const API_BASE = "http://localhost:8000";
-
-  // Get current user and fetch data on mount
+  // Load current user + profile
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
+        setAuthUser(user);
         try {
-          const response = await fetch(`${API_BASE}/user/${user.uid}`);
-          const data = await response.json();
-          setCurrentUser(data);
-          
-          // Fetch all users and conversations
-          await fetchAllUsers();
-          await fetchConversations(data.user_id);
-        } catch (error) {
-          console.error("Error fetching user data:", error);
+          const profileRes = await fetch(`http://localhost:8000/user/${user.uid}`);
+          if (profileRes.ok) {
+            const profileData = await profileRes.json();
+            setUserProfile(profileData);
+          }
+        } catch (err) {
+          console.error("Error loading user profile for chat:", err);
+        }
+
+        // Load all users for roster
+        try {
+          const usersRes = await fetch("http://localhost:8000/users");
+          if (usersRes.ok) {
+            const allUsers = await usersRes.json();
+            // Exclude current user and sort by role priority then name
+            const filtered = allUsers
+              .filter((u) => u.firebase_uid !== user.uid)
+              .sort((a, b) => {
+                const roleA = ROLE_PRIORITY[a.role] ?? 99;
+                const roleB = ROLE_PRIORITY[b.role] ?? 99;
+                if (roleA !== roleB) return roleA - roleB;
+                return (a.full_name || "").localeCompare(b.full_name || "");
+              });
+            setUsers(filtered);
+            if (filtered.length > 0) {
+              setSelectedUser(filtered[0]);
+            }
+          }
+        } catch (err) {
+          console.error("Error loading users for chat:", err);
         }
       }
+      setLoading(false);
     });
 
-    return unsubscribe;
+    return () => unsubscribe();
   }, []);
 
-  // Poll for messages when conversation is selected
-  useEffect(() => {
-    if (!selectedConversation) return;
-
-    const fetchMessages = async () => {
-      try {
-        const response = await fetch(
-          `${API_BASE}/messages/${selectedConversation.conversation_id}`
-        );
-        const data = await response.json();
+  // Fetch messages between authUser and selectedUser
+  const loadMessages = async (currentUser, otherUser) => {
+    if (!currentUser || !otherUser) return;
+    try {
+      const res = await fetch(
+        `http://localhost:8000/messages?user1=${currentUser.uid}&user2=${otherUser.firebase_uid}`
+      );
+      if (res.ok) {
+        const data = await res.json();
         setMessages(data);
-      } catch (error) {
-        console.error("Error fetching messages:", error);
+      } else {
+        const text = await res.text();
+        console.error("Failed to load messages:", res.status, text);
       }
-    };
+    } catch (err) {
+      console.error("Error loading messages:", err);
+    }
+  };
 
-    fetchMessages();
-    const interval = setInterval(fetchMessages, 3000); // Poll every 3 seconds
+  // Initial + polling load of messages when selectedUser changes
+  useEffect(() => {
+    if (!authUser || !selectedUser) return;
+
+    // Initial load
+    loadMessages(authUser, selectedUser);
+
+    // Poll every few seconds
+    const interval = setInterval(() => {
+      loadMessages(authUser, selectedUser);
+    }, 3000);
 
     return () => clearInterval(interval);
-  }, [selectedConversation]);
+  }, [authUser, selectedUser]);
 
-  const fetchAllUsers = async () => {
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!authUser || !selectedUser || !newMessage.trim()) return;
+
+    setSending(true);
     try {
-      const response = await fetch(`${API_BASE}/users`);
-      const data = await response.json();
-      setUsers(data.filter(u => u.user_id !== currentUser?.user_id));
-    } catch (error) {
-      console.error("Error fetching users:", error);
-    }
-  };
-
-  const fetchConversations = async (userId) => {
-    try {
-      const response = await fetch(`${API_BASE}/conversations/${userId}`);
-      const data = await response.json();
-      setConversations(data);
-    } catch (error) {
-      console.error("Error fetching conversations:", error);
-    }
-  };
-
-  const startConversation = async (otherUserId) => {
-    try {
-      const response = await fetch(
-        `${API_BASE}/conversations/one-on-one/${currentUser.user_id}/${otherUserId}`,
-        { method: "POST" }
-      );
-      const data = await response.json();
-      
-      // Refetch conversations to include the new one
-      await fetchConversations(currentUser.user_id);
-      
-      // Find and select the conversation
-      const conversations = await fetch(`${API_BASE}/conversations/${currentUser.user_id}`);
-      const convData = await conversations.json();
-      const selected = convData.find(c => c.conversation_id === data.conversation_id);
-      if (selected) {
-        setSelectedConversation(selected);
-        setShowUserList(false);
-      }
-    } catch (error) {
-      console.error("Error starting conversation:", error);
-    }
-  };
-
-  const createGroupConversation = async () => {
-    if (!groupName.trim() || selectedUsers.length === 0) {
-      alert("Please enter a group name and select at least one user");
-      return;
-    }
-
-    try {
-      const response = await fetch(`${API_BASE}/conversations/group?group_name=${groupName}`, {
+      const res = await fetch("http://localhost:8000/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          user_ids: [currentUser.user_id, ...selectedUsers]
-        })
+          sender_uid: authUser.uid,
+          receiver_uid: selectedUser.firebase_uid,
+          content: newMessage.trim(),
+        }),
       });
-      const data = await response.json();
-      
-      // Refetch conversations
-      await fetchConversations(currentUser.user_id);
-      
-      // Reset form
-      setGroupName("");
-      setSelectedUsers([]);
-      setCreatingGroup(false);
-      
-      // Select the new group
-      const conversations = await fetch(`${API_BASE}/conversations/${currentUser.user_id}`);
-      const convData = await conversations.json();
-      const selected = convData.find(c => c.conversation_id === data.conversation_id);
-      if (selected) {
-        setSelectedConversation(selected);
-        setShowUserList(false);
+
+      if (res.ok) {
+        setNewMessage("");
+        // Refresh messages after sending
+        loadMessages(authUser, selectedUser);
+      } else {
+        const text = await res.text();
+        console.error("Failed to send message:", res.status, text);
+        alert("Could not send message (status " + res.status + "). Check backend logs.");
       }
-    } catch (error) {
-      console.error("Error creating group:", error);
+    } catch (err) {
+      console.error("Error sending message:", err);
+      alert("Network error sending message. Is the backend running on port 8000?");
+    } finally {
+      setSending(false);
     }
   };
 
-  const sendMessage = async () => {
-    if (!newMessage.trim() || !selectedConversation) return;
-
-    try {
-      await fetch(`${API_BASE}/messages/${selectedConversation.conversation_id}?sender_id=${currentUser.user_id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: newMessage })
-      });
-      
-      setNewMessage("");
-      
-      // Fetch updated messages
-      const response = await fetch(
-        `${API_BASE}/messages/${selectedConversation.conversation_id}`
-      );
-      const data = await response.json();
-      setMessages(data);
-    } catch (error) {
-      console.error("Error sending message:", error);
-    }
-  };
-
-  const getConversationTitle = (conv) => {
-    if (conv.is_group) return conv.group_name;
-    const other = conv.participants.find(p => p.user_id !== currentUser?.user_id);
-    return other?.full_name || "Unknown";
-  };
+  if (loading) {
+    return (
+      <div className="page with-navbar">
+        <Navbar />
+        <div className="dm-page">
+          <div className="dm-shell">
+            <div className="dm-sidebar">
+              <div className="dm-brand">
+                <h1 className="tagline">
+                  Discussion <span className="highlight">Forum</span>
+                </h1>
+                <p className="tagline-sub">Loading chat...</p>
+              </div>
+            </div>
+            <div className="dm-main">
+              <div className="dm-main-empty">Loading…</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page with-navbar">
       <Navbar />
-      <div className="page-content">
-        <div className="left-panel">
-          <h1 className="tagline">
-            Discussion <span className="highlight">Forum</span>
-          </h1>
-          <p className="tagline-sub">
-            Connect and collaborate with your peers
-          </p>
-        </div>
-        <div className="right-panel">
-          <div className="card" style={{ height: "100%", display: "flex", flexDirection: "column" }}>
-            {!selectedConversation ? (
-              <>
-                <h2 style={{ marginBottom: "16px" }}>Messaging</h2>
-                
-                <div style={{ flex: 1, overflowY: "auto", marginBottom: "16px" }}>
-                  {conversations.length === 0 ? (
-                    <p style={{ color: "var(--text-secondary)" }}>
-                      No conversations yet. Start one below!
-                    </p>
-                  ) : (
-                    conversations.map((conv) => (
-                      <div
-                        key={conv.conversation_id}
-                        onClick={() => setSelectedConversation(conv)}
-                        style={{
-                          padding: "12px",
-                          marginBottom: "8px",
-                          backgroundColor: "var(--bg-tertiary)",
-                          borderRadius: "8px",
-                          cursor: "pointer",
-                          transition: "background-color 0.2s"
-                        }}
-                        onMouseEnter={(e) => e.target.style.backgroundColor = "var(--bg-hover)"}
-                        onMouseLeave={(e) => e.target.style.backgroundColor = "var(--bg-tertiary)"}
-                      >
-                        <strong>{getConversationTitle(conv)}</strong>
-                        <p style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "4px" }}>
-                          {conv.participants.map(p => p.full_name).join(", ")}
-                        </p>
-                      </div>
-                    ))
-                  )}
-                </div>
+      <div className="dm-page">
+        <div className="dm-shell">
+          {/* Left sidebar like Instagram user list + profile */}
+          <aside className="dm-sidebar">
+            <div className="dm-sidebar-header">
+              <h2 className="dm-sidebar-title">Messages</h2>
+              {userProfile && (
+                <p className="dm-sidebar-sub">
+                  {userProfile.full_name} · {userProfile.role}
+                </p>
+              )}
+            </div>
 
-                {creatingGroup ? (
-                  <div style={{ marginBottom: "16px" }}>
-                    <input
-                      type="text"
-                      placeholder="Group name"
-                      value={groupName}
-                      onChange={(e) => setGroupName(e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "8px",
-                        marginBottom: "8px",
-                        borderRadius: "4px",
-                        border: "1px solid var(--border-color)"
-                      }}
-                    />
-                    <div style={{ maxHeight: "150px", overflowY: "auto", marginBottom: "8px" }}>
-                      {users.map((user) => (
-                        <label key={user.user_id} style={{ display: "flex", alignItems: "center", marginBottom: "8px" }}>
-                          <input
-                            type="checkbox"
-                            checked={selectedUsers.includes(user.user_id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedUsers([...selectedUsers, user.user_id]);
-                              } else {
-                                setSelectedUsers(selectedUsers.filter(id => id !== user.user_id));
-                              }
-                            }}
-                            style={{ marginRight: "8px" }}
-                          />
-                          {user.full_name}
-                        </label>
-                      ))}
+            <div className="dm-list-label">Chats</div>
+            <div className="dm-user-list">
+              {users.length === 0 && (
+                <p className="dm-empty-text">No other users yet.</p>
+              )}
+              {users.map((u) => {
+                const isActive = selectedUser?.firebase_uid === u.firebase_uid;
+                return (
+                  <button
+                    key={u.firebase_uid}
+                    type="button"
+                    className={`dm-user-row ${isActive ? "active" : ""}`}
+                    onClick={() => setSelectedUser(u)}
+                  >
+                    <div className="dm-avatar">
+                      {u.full_name
+                        ?.split(" ")
+                        .map((part) => part[0])
+                        .join("")
+                        .slice(0, 2)
+                        .toUpperCase() || "U"}
                     </div>
-                    <div style={{ display: "flex", gap: "8px" }}>
-                      <button
-                        onClick={createGroupConversation}
-                        style={{
-                          flex: 1,
-                          padding: "8px",
-                          backgroundColor: "var(--primary-color)",
-                          color: "white",
-                          border: "none",
-                          borderRadius: "4px",
-                          cursor: "pointer"
-                        }}
-                      >
-                        Create
-                      </button>
-                      <button
-                        onClick={() => {
-                          setCreatingGroup(false);
-                          setGroupName("");
-                          setSelectedUsers([]);
-                        }}
-                        style={{
-                          flex: 1,
-                          padding: "8px",
-                          backgroundColor: "var(--bg-tertiary)",
-                          border: "1px solid var(--border-color)",
-                          borderRadius: "4px",
-                          cursor: "pointer"
-                        }}
-                      >
-                        Cancel
-                      </button>
+                    <div className="dm-user-meta">
+                      <div className="dm-user-name">{u.full_name}</div>
+                      <div className="dm-user-role">{u.role}</div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </aside>
+
+          {/* Right main chat pane */}
+          <section className="dm-main">
+            <header className="dm-main-header">
+              {selectedUser ? (
+                <>
+                  <div className="dm-main-user">
+                    <div className="dm-avatar dm-avatar-sm">
+                      {selectedUser.full_name
+                        ?.split(" ")
+                        .map((part) => part[0])
+                        .join("")
+                        .slice(0, 2)
+                        .toUpperCase() || "U"}
+                    </div>
+                    <div>
+                      <div className="dm-main-name">{selectedUser.full_name}</div>
+                      <div className="dm-main-role">{selectedUser.role}</div>
                     </div>
                   </div>
-                ) : (
-                  <div style={{ display: "flex", gap: "8px" }}>
-                    <button
-                      onClick={() => setShowUserList(!showUserList)}
-                      style={{
-                        flex: 1,
-                        padding: "8px",
-                        backgroundColor: "var(--primary-color)",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "pointer"
-                      }}
-                    >
-                      {showUserList ? "Hide Users" : "Message User"}
-                    </button>
-                    <button
-                      onClick={() => setCreatingGroup(true)}
-                      style={{
-                        flex: 1,
-                        padding: "8px",
-                        backgroundColor: "var(--secondary-color)",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "pointer"
-                      }}
-                    >
-                      Create Group
-                    </button>
-                  </div>
-                )}
+                </>
+              ) : (
+                <div className="dm-main-empty">
+                  Select a user from the left to start a conversation.
+                </div>
+              )}
+            </header>
 
-                {showUserList && !creatingGroup && (
-                  <div style={{ marginTop: "12px", maxHeight: "200px", overflowY: "auto" }}>
-                    {users.map((user) => (
-                      <div
-                        key={user.user_id}
-                        onClick={() => startConversation(user.user_id)}
-                        style={{
-                          padding: "12px",
-                          marginBottom: "8px",
-                          backgroundColor: "var(--bg-tertiary)",
-                          borderRadius: "8px",
-                          cursor: "pointer",
-                          transition: "background-color 0.2s"
-                        }}
-                        onMouseEnter={(e) => e.target.style.backgroundColor = "var(--bg-hover)"}
-                        onMouseLeave={(e) => e.target.style.backgroundColor = "var(--bg-tertiary)"}
-                      >
-                        <strong>{user.full_name}</strong>
-                        <p style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "4px" }}>
-                          {user.role}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </>
-            ) : (
-              <>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-                  <h2>{getConversationTitle(selectedConversation)}</h2>
-                  <button
-                    onClick={() => setSelectedConversation(null)}
-                    style={{
-                      padding: "8px 16px",
-                      backgroundColor: "var(--bg-tertiary)",
-                      border: "1px solid var(--border-color)",
-                      borderRadius: "4px",
-                      cursor: "pointer"
-                    }}
+            {/* Messages scroll area */}
+            <div className="dm-messages">
+              {selectedUser && messages.length === 0 && (
+                <p className="dm-empty-text">No messages yet. Say hi!</p>
+              )}
+              {messages.map((m) => {
+                const isMe = m.sender_uid === authUser?.uid;
+                return (
+                  <div
+                    key={m.id}
+                    className={`dm-message-row ${isMe ? "me" : "them"}`}
                   >
-                    Back
-                  </button>
-                </div>
+                    <div className="dm-bubble">{m.content}</div>
+                  </div>
+                );
+              })}
+            </div>
 
-                <div
-                  style={{
-                    flex: 1,
-                    overflowY: "auto",
-                    marginBottom: "16px",
-                    padding: "12px",
-                    backgroundColor: "var(--bg-tertiary)",
-                    borderRadius: "8px"
-                  }}
-                >
-                  {messages.length === 0 ? (
-                    <p style={{ color: "var(--text-secondary)" }}>No messages yet</p>
-                  ) : (
-                    messages.map((msg) => (
-                      <div
-                        key={msg.message_id}
-                        style={{
-                          marginBottom: "12px",
-                          padding: "8px",
-                          backgroundColor: msg.sender_id === currentUser?.user_id ? "var(--primary-color)" : "var(--bg-secondary)",
-                          color: msg.sender_id === currentUser?.user_id ? "white" : "inherit",
-                          borderRadius: "8px",
-                          maxWidth: "80%",
-                          marginLeft: msg.sender_id === currentUser?.user_id ? "auto" : "0"
-                        }}
-                      >
-                        <strong>{msg.sender_name}</strong>
-                        <p style={{ margin: "4px 0 0 0" }}>{msg.content}</p>
-                        <p style={{ fontSize: "12px", marginTop: "4px", opacity: 0.7 }}>
-                          {new Date(msg.created_at).toLocaleTimeString()}
-                        </p>
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <input
-                    type="text"
-                    placeholder="Type a message..."
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") sendMessage();
-                    }}
-                    style={{
-                      flex: 1,
-                      padding: "8px",
-                      borderRadius: "4px",
-                      border: "1px solid var(--border-color)"
-                    }}
-                  />
-                  <button
-                    onClick={sendMessage}
-                    style={{
-                      padding: "8px 16px",
-                      backgroundColor: "var(--primary-color)",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "4px",
-                      cursor: "pointer"
-                    }}
-                  >
-                    Send
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
+            {/* Input bar pinned to bottom, full width of chat column */}
+            <form className="dm-input-bar" onSubmit={handleSendMessage}>
+              <input
+                type="text"
+                placeholder={
+                  selectedUser
+                    ? "Message..."
+                    : "Select a user from the left to start messaging"
+                }
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                disabled={!selectedUser || sending}
+              />
+              <button
+                type="submit"
+                className="btn-submit dm-send-btn"
+                disabled={!selectedUser || sending || !newMessage.trim()}
+              >
+                Send
+              </button>
+            </form>
+          </section>
         </div>
       </div>
     </div>
