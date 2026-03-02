@@ -90,3 +90,51 @@ class PostVote(Base):
     vote = Column(Integer, nullable=False)  # 1 or -1
 
     post = relationship("Post", back_populates="votes")
+
+
+class StudyGroup(Base):
+    __tablename__ = "study_groups"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    members = relationship("StudyGroupMember", back_populates="group", cascade="all, delete-orphan")
+    sessions = relationship("StudySession", back_populates="group", cascade="all, delete-orphan")
+
+
+class StudyGroupMember(Base):
+    __tablename__ = "study_group_members"
+
+    id = Column(Integer, primary_key=True, index=True)
+    group_id = Column(Integer, ForeignKey("study_groups.id"), nullable=False)
+    user_email = Column(String, nullable=False)
+    joined_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    group = relationship("StudyGroup", back_populates="members")
+
+
+class StudySession(Base):
+    __tablename__ = "study_sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    creator_email = Column(String, nullable=False)
+    session_type = Column(String, default="solo")  # 'solo' or 'group'
+    title = Column(String, nullable=False)
+    starts_at = Column(DateTime, nullable=False)
+    ends_at = Column(DateTime, nullable=False)
+    group_id = Column(Integer, ForeignKey("study_groups.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    group = relationship("StudyGroup", back_populates="sessions")
+
+
+class UserAvailability(Base):
+    __tablename__ = "user_availability"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_email = Column(String, nullable=False)
+    starts_at = Column(DateTime, nullable=False)
+    ends_at = Column(DateTime, nullable=False)
+    source = Column(String, default="google_calendar")
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)

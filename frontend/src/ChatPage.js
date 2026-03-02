@@ -68,7 +68,7 @@ const ChatPage = () => {
 
   // Fetch messages between authUser and selectedUser
   const loadMessages = async (currentUser, otherUser) => {
-    if (!currentUser || !otherUser) return;
+    if (!currentUser || !otherUser || !otherUser.firebase_uid) return;
     try {
       const res = await fetch(
         `http://localhost:8000/messages?user1=${currentUser.uid}&user2=${otherUser.firebase_uid}`
@@ -102,7 +102,7 @@ const ChatPage = () => {
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!authUser || !selectedUser || !newMessage.trim()) return;
+    if (!authUser || !selectedUser || !selectedUser.firebase_uid || !newMessage.trim()) return;
 
     setSending(true);
     try {
