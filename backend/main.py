@@ -30,6 +30,7 @@ app.add_middleware(
 class UserSimple(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     user_id: int
+    firebase_uid: str
     full_name: str
     email: str
     role: str
@@ -161,9 +162,10 @@ def list_users(db: Session = Depends(get_db)):
     users = db.query(models.User).all()
     return [
         UserSimple(
-            user_id=u.user_id, 
-            full_name=u.full_name, 
-            email=u.email, 
+            user_id=u.user_id,
+            firebase_uid=u.firebase_uid,
+            full_name=u.full_name,
+            email=u.email,
             role=u.role or "Student"
         )
         for u in users
@@ -241,6 +243,58 @@ def get_user_conversations(user_id: int, db: Session = Depends(get_db)):
             ]
         })
     return result
+
+# ============ DIRECT MESSAGE ENDPOINTS (by Firebase UID) ============
+
+class DirectMessageCreate(BaseModel):
+    sender_uid: str
+    receiver_uid: str
+    content: str
+
+@app.get("/messages")
+def get_messages_by_uid(user1: str, user2: str, db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    rows = db.execute(
+        text("""
+            SELECT id, sender_uid, receiver_uid, content, created_at
+            FROM messages
+            WHERE (sender_uid = :u1 AND receiver_uid = :u2)
+               OR (sender_uid = :u2 AND receiver_uid = :u1)
+            ORDER BY created_at ASC
+        """),
+        {"u1": user1, "u2": user2}
+    ).fetchall()
+    return [
+        {
+            "id": r[0],
+            "sender_uid": r[1],
+            "receiver_uid": r[2],
+            "content": r[3],
+            "created_at": r[4]
+        }
+        for r in rows
+    ]
+
+@app.post("/messages")
+def send_message_by_uid(msg: DirectMessageCreate, db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    result = db.execute(
+        text("""
+            INSERT INTO messages (sender_uid, receiver_uid, content)
+            VALUES (:sender_uid, :receiver_uid, :content)
+            RETURNING id, sender_uid, receiver_uid, content, created_at
+        """),
+        {"sender_uid": msg.sender_uid, "receiver_uid": msg.receiver_uid, "content": msg.content}
+    ).fetchone()
+    db.commit()
+    return {
+        "id": result[0],
+        "sender_uid": result[1],
+        "receiver_uid": result[2],
+        "content": result[3],
+        "created_at": result[4]
+    }
+
 
 @app.post("/messages/{conversation_id}")
 def send_message(conversation_id: int, sender_id: int, message: MessageCreate, db: Session = Depends(get_db)):
@@ -352,3 +406,198 @@ def vote_post(post_id: int, user_uid: str = Query(...), vote: int = Query(...), 
     post.score = post.score - prev_vote + vote
     db.commit()
     return {"status": "success"}
+
+
+# ============ STUDY GROUP ENDPOINTS ============
+
+class StudyGroupCreate(BaseModel):
+    name: str
+    user_email: str
+
+class JoinGroupRequest(BaseModel):
+    user_email: str
+
+@app.get("/study-groups")
+def get_study_groups(user_email: str, db: Session = Depends(get_db)):
+    members = db.query(models.StudyGroupMember).filter(
+        models.StudyGroupMember.user_email == user_email
+    ).all()
+    group_ids = [m.group_id for m in members]
+    groups = db.query(models.StudyGroup).filter(
+        models.StudyGroup.id.in_(group_ids)
+    ).all()
+    return [
+        {"id": g.id, "name": g.name, "created_at": g.created_at,
+         "member_count": len(g.members)}
+        for g in groups
+    ]
+
+@app.post("/study-groups")
+def create_study_group(body: StudyGroupCreate, db: Session = Depends(get_db)):
+    group = models.StudyGroup(name=body.name)
+    db.add(group)
+    db.flush()
+    db.add(models.StudyGroupMember(group_id=group.id, user_email=body.user_email))
+    db.commit()
+    db.refresh(group)
+    return {"id": group.id, "name": group.name, "created_at": group.created_at}
+
+@app.post("/study-groups/{group_id}/join")
+def join_study_group(group_id: int, body: JoinGroupRequest, db: Session = Depends(get_db)):
+    group = db.query(models.StudyGroup).filter(models.StudyGroup.id == group_id).first()
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    existing = db.query(models.StudyGroupMember).filter(
+        models.StudyGroupMember.group_id == group_id,
+        models.StudyGroupMember.user_email == body.user_email
+    ).first()
+    if not existing:
+        db.add(models.StudyGroupMember(group_id=group_id, user_email=body.user_email))
+        db.commit()
+    return {"id": group.id, "name": group.name}
+
+@app.get("/study-groups/{group_id}/suggestions")
+def get_group_suggestions(
+    group_id: int,
+    range_start: str,
+    range_end: str,
+    duration_minutes: int = 60,
+    slot_minutes: int = 30,
+    day_start_hour: int = 8,
+    day_end_hour: int = 22,
+    min_available_members: int = 1,
+    user_timezone: str = "UTC",
+    db: Session = Depends(get_db)
+):
+    from datetime import timedelta
+    group = db.query(models.StudyGroup).filter(models.StudyGroup.id == group_id).first()
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+
+    members = db.query(models.StudyGroupMember).filter(
+        models.StudyGroupMember.group_id == group_id
+    ).all()
+    member_emails = {m.user_email for m in members}
+    total_members = len(member_emails)
+
+    start = datetime.fromisoformat(range_start.replace("Z", "+00:00")).replace(tzinfo=None)
+    end = datetime.fromisoformat(range_end.replace("Z", "+00:00")).replace(tzinfo=None)
+
+    busy_slots = db.query(models.UserAvailability).filter(
+        models.UserAvailability.user_email.in_(member_emails),
+        models.UserAvailability.starts_at < end,
+        models.UserAvailability.ends_at > start
+    ).all()
+
+    suggestions = []
+    slot_start = start
+    while slot_start + timedelta(minutes=duration_minutes) <= end:
+        slot_end = slot_start + timedelta(minutes=duration_minutes)
+        if day_start_hour <= slot_start.hour < day_end_hour:
+            busy_count = sum(
+                1 for b in busy_slots
+                if b.starts_at < slot_end and b.ends_at > slot_start
+            )
+            available = total_members - busy_count
+            if available >= min_available_members:
+                suggestions.append({
+                    "starts_at": slot_start.isoformat(),
+                    "ends_at": slot_end.isoformat(),
+                    "available_members": available,
+                    "total_members": total_members
+                })
+        slot_start += timedelta(minutes=slot_minutes)
+
+    return {"suggestions": suggestions[:50]}
+
+
+# ============ STUDY SESSION ENDPOINTS ============
+
+class StudySessionCreate(BaseModel):
+    creator_email: str
+    session_type: str = "solo"
+    title: str
+    starts_at: str
+    ends_at: str
+    group_id: Optional[int] = None
+
+@app.get("/study-sessions")
+def get_study_sessions(user_email: str, range_start: str, range_end: str, db: Session = Depends(get_db)):
+    start = datetime.fromisoformat(range_start.replace("Z", "+00:00")).replace(tzinfo=None)
+    end = datetime.fromisoformat(range_end.replace("Z", "+00:00")).replace(tzinfo=None)
+    sessions = db.query(models.StudySession).filter(
+        models.StudySession.creator_email == user_email,
+        models.StudySession.starts_at >= start,
+        models.StudySession.starts_at < end
+    ).order_by(models.StudySession.starts_at.asc()).all()
+    return [
+        {
+            "id": s.id,
+            "title": s.title,
+            "session_type": s.session_type,
+            "starts_at": s.starts_at.isoformat(),
+            "ends_at": s.ends_at.isoformat(),
+            "group_id": s.group_id,
+            "creator_email": s.creator_email
+        }
+        for s in sessions
+    ]
+
+@app.post("/study-sessions")
+def create_study_session(body: StudySessionCreate, db: Session = Depends(get_db)):
+    session = models.StudySession(
+        creator_email=body.creator_email,
+        session_type=body.session_type,
+        title=body.title,
+        starts_at=datetime.fromisoformat(body.starts_at.replace("Z", "+00:00")).replace(tzinfo=None),
+        ends_at=datetime.fromisoformat(body.ends_at.replace("Z", "+00:00")).replace(tzinfo=None),
+        group_id=body.group_id
+    )
+    db.add(session)
+    db.commit()
+    db.refresh(session)
+    return {
+        "id": session.id,
+        "title": session.title,
+        "session_type": session.session_type,
+        "starts_at": session.starts_at.isoformat(),
+        "ends_at": session.ends_at.isoformat(),
+        "group_id": session.group_id
+    }
+
+
+# ============ AVAILABILITY SYNC ENDPOINT ============
+
+class BusySlot(BaseModel):
+    starts_at: str
+    ends_at: str
+
+class AvailabilitySync(BaseModel):
+    user_email: str
+    starts_at: str
+    ends_at: str
+    timezone: str = "UTC"
+    source: str = "google_calendar"
+    busy_slots: List[BusySlot]
+
+@app.post("/availability/sync")
+def sync_availability(body: AvailabilitySync, db: Session = Depends(get_db)):
+    range_start = datetime.fromisoformat(body.starts_at.replace("Z", "+00:00")).replace(tzinfo=None)
+    range_end = datetime.fromisoformat(body.ends_at.replace("Z", "+00:00")).replace(tzinfo=None)
+    # Delete old blocks in range
+    db.query(models.UserAvailability).filter(
+        models.UserAvailability.user_email == body.user_email,
+        models.UserAvailability.starts_at >= range_start,
+        models.UserAvailability.ends_at <= range_end
+    ).delete(synchronize_session=False)
+    count = 0
+    for slot in body.busy_slots:
+        db.add(models.UserAvailability(
+            user_email=body.user_email,
+            starts_at=datetime.fromisoformat(slot.starts_at.replace("Z", "+00:00")).replace(tzinfo=None),
+            ends_at=datetime.fromisoformat(slot.ends_at.replace("Z", "+00:00")).replace(tzinfo=None),
+            source=body.source
+        ))
+        count += 1
+    db.commit()
+    return {"inserted_busy_blocks": count}
