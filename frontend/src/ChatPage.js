@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import Navbar from "./Navbar";
+import { useParams } from "react-router-dom";
 import "./LoginPage.css";
 import "./ChatPage.css";
 import { auth } from "./firebase";
@@ -11,7 +11,8 @@ const ROLE_PRIORITY = {
   Student: 2,
 };
 
-const ChatPage = () => {
+const ChatPage = ({ isGlobal = true }) => {
+  const { courseId } = useParams();
   const [authUser, setAuthUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -28,7 +29,9 @@ const ChatPage = () => {
       if (user) {
         setAuthUser(user);
         try {
-          const profileRes = await fetch(`http://localhost:8000/user/${user.uid}`);
+          const profileRes = await fetch(
+            `http://localhost:8000/user/${user.uid}`,
+          );
           if (profileRes.ok) {
             const profileData = await profileRes.json();
             setUserProfile(profileData);
@@ -42,48 +45,54 @@ const ChatPage = () => {
           const usersRes = await fetch("http://localhost:8000/users");
           if (usersRes.ok) {
             const allUsers = await usersRes.json();
-            // Exclude current user and sort by role priority then name
-            const filtered = allUsers
-              .filter((u) => u.firebase_uid !== user.uid)
-              .sort((a, b) => {
-                const roleA = ROLE_PRIORITY[a.role] ?? 99;
-                const roleB = ROLE_PRIORITY[b.role] ?? 99;
-                if (roleA !== roleB) return roleA - roleB;
-                return (a.full_name || "").localeCompare(b.full_name || "");
-              });
-            setUsers(filtered);
-            if (filtered.length > 0) {
-              setSelectedUser(filtered[0]);
+            let filtered = allUsers.filter((u) => u.firebase_uid !== user.uid);
+
+            // ADD THE CLASS CHAT LOGIC HERE
+            if (!isGlobal && courseId) {
+              const classChatEntry = {
+                firebase_uid: "CLASS_GROUP_ID", // Sentinel ID
+                full_name: "Class Discussion",
+                role: "Public Channel",
+                is_group: true,
+                course_id: courseId,
+              };
+              setUsers([classChatEntry, ...filtered]); // Put it at the top
+              setSelectedUser(classChatEntry); // Default to class chat
+            } else {
+              setUsers(filtered);
+              if (filtered.length > 0) setSelectedUser(filtered[0]);
             }
           }
         } catch (err) {
-          console.error("Error loading users for chat:", err);
+          console.error(err);
         }
       }
       setLoading(false);
     });
-
     return () => unsubscribe();
-  }, []);
+  }, [isGlobal, courseId]);
 
-  // Fetch messages between authUser and selectedUser
+  // Fetch messages between authUser and selectedUser (scoped to course if not global)
   const loadMessages = async (currentUser, otherUser) => {
-    if (!currentUser || !otherUser || !otherUser.firebase_uid) return;
-    try {
-      const res = await fetch(
-        `http://localhost:8000/messages?user1=${currentUser.uid}&user2=${otherUser.firebase_uid}`
-      );
-      if (res.ok) {
-        const data = await res.json();
-        setMessages(data);
-      } else {
-        const text = await res.text();
-        console.error("Failed to load messages:", res.status, text);
-      }
-    } catch (err) {
-      console.error("Error loading messages:", err);
+  if (!currentUser || !otherUser) return;
+  try {
+    const params = new URLSearchParams();
+    params.append("user1", currentUser.uid);
+    params.append("user2", otherUser.firebase_uid);
+    params.append("is_group", otherUser.is_group || false); // Add this!
+    if (!isGlobal && courseId) {
+      params.append("course_id", courseId);
     }
-  };
+
+    const res = await fetch(`http://localhost:8000/messages?${params.toString()}`);
+    if (res.ok) {
+      const data = await res.json();
+      setMessages(data);
+    }
+  } catch (err) {
+    console.error("Error loading messages:", err);
+  }
+};
 
   // Initial + polling load of messages when selectedUser changes
   useEffect(() => {
@@ -98,36 +107,48 @@ const ChatPage = () => {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [authUser, selectedUser]);
+  }, [authUser, selectedUser, isGlobal, courseId]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!authUser || !selectedUser || !selectedUser.firebase_uid || !newMessage.trim()) return;
+    if (
+      !authUser ||
+      !selectedUser ||
+      !selectedUser.firebase_uid ||
+      !newMessage.trim()
+    )
+      return;
 
     setSending(true);
     try {
+      const payload = {
+        sender_uid: authUser.uid,
+        content: newMessage.trim(),
+        course_id: parseInt(courseId || 0),
+        // If group is selected, handle receiver_uid differently on backend
+        receiver_uid: selectedUser.is_group
+          ? "GROUP"
+          : selectedUser.firebase_uid,
+        is_group: selectedUser.is_group || false,
+      };
+
       const res = await fetch("http://localhost:8000/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sender_uid: authUser.uid,
-          receiver_uid: selectedUser.firebase_uid,
-          content: newMessage.trim(),
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
         setNewMessage("");
-        // Refresh messages after sending
         loadMessages(authUser, selectedUser);
       } else {
-        const text = await res.text();
-        console.error("Failed to send message:", res.status, text);
-        alert("Could not send message (status " + res.status + "). Check backend logs.");
+        const errorData = await res.json();
+        console.error("Failed to send message:", errorData);
+        alert(`Error: ${errorData.detail || "Could not send message"}`);
       }
     } catch (err) {
       console.error("Error sending message:", err);
-      alert("Network error sending message. Is the backend running on port 8000?");
+      alert("Network error sending message.");
     } finally {
       setSending(false);
     }
@@ -136,7 +157,6 @@ const ChatPage = () => {
   if (loading) {
     return (
       <div className="page with-navbar">
-        <Navbar />
         <div className="dm-page">
           <div className="dm-shell">
             <div className="dm-sidebar">
@@ -158,7 +178,6 @@ const ChatPage = () => {
 
   return (
     <div className="page with-navbar">
-      <Navbar />
       <div className="dm-page">
         <div className="dm-shell">
           {/* Left sidebar like Instagram user list + profile */}
@@ -219,7 +238,9 @@ const ChatPage = () => {
                         .toUpperCase() || "U"}
                     </div>
                     <div>
-                      <div className="dm-main-name">{selectedUser.full_name}</div>
+                      <div className="dm-main-name">
+                        {selectedUser.full_name}
+                      </div>
                       <div className="dm-main-role">{selectedUser.role}</div>
                     </div>
                   </div>
@@ -243,6 +264,10 @@ const ChatPage = () => {
                     key={m.id}
                     className={`dm-message-row ${isMe ? "me" : "them"}`}
                   >
+                    {/* Show sender name for everyone else in a group context */}
+                    {!isMe && selectedUser?.is_group && (
+                      <span className="dm-sender-label">{m.sender_name}</span>
+                    )}
                     <div className="dm-bubble">{m.content}</div>
                   </div>
                 );

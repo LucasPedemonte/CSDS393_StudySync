@@ -1,0 +1,342 @@
+/* ============ CLASS HEADER CONTAINER ============ */
+.class-header-container {
+  background: var(--navy-card);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  z-index: 10;
+  position: relative;
+  width: 100%;
+}
+
+/* ============ CLASS HEADER TOP (Title + Dropdown) ============ */
+.class-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 32px;
+  border-bottom: 1px solid var(--border);
+  gap: 16px;
+}
+
+/* ============ CLASS TITLE WITH DROPDOWN ============ */
+.class-title-with-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+}
+
+.class-title {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  background: linear-gradient(90deg, #fff, #94a3b8);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0;
+  letter-spacing: -0.5px;
+  text-transform: uppercase;
+}
+
+/* ============ DROPDOWN TRIGGER BUTTON ============ */
+.dropdown-trigger {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+}
+
+.dropdown-trigger:hover {
+  color: var(--teal);
+  background: var(--teal-dim);
+}
+
+.dropdown-trigger svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+  transition: transform 0.2s ease;
+}
+
+/* ============ DROPDOWN MENU ============ */
+.class-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: var(--navy-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-top: 8px;
+  min-width: 280px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  overflow: hidden;
+  animation: dropdownSlideDown 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes dropdownSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-label {
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-placeholder);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+  background: var(--navy-input);
+}
+
+.dropdown-list {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+/* Scrollbar styling */
+.dropdown-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dropdown-list::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+.dropdown-list::-webkit-scrollbar-thumb:hover {
+  background: var(--teal);
+}
+
+.dropdown-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.dropdown-item:hover {
+  background: var(--navy-input);
+  color: var(--text-primary);
+}
+
+.dropdown-item.active {
+  background: var(--teal-dim);
+  color: var(--teal);
+  border-left: 3px solid var(--teal);
+  padding-left: 13px;
+}
+
+.course-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--navy);
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--teal);
+  flex-shrink: 0;
+}
+
+.course-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.course-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.course-code {
+  font-size: 12px;
+  color: var(--text-placeholder);
+  font-weight: 400;
+}
+
+.check-mark {
+  color: var(--teal);
+  font-weight: 600;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.dropdown-empty {
+  padding: 20px 16px;
+  text-align: center;
+  color: var(--text-placeholder);
+  font-size: 14px;
+}
+
+/* ============ CLASS QUICK INFO ============ */
+.class-quick-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.course-code-badge {
+  background: var(--teal-dim);
+  border: 1px solid var(--border);
+  color: var(--teal);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* ============ SECONDARY NAVIGATION ============ */
+.secondary-navbar {
+  display: flex;
+  gap: 0;
+  padding: 0;
+  border-top: 1px solid var(--border);
+  background: var(--navy);
+  justify-content: center;
+  width: 100%;
+}
+
+.sec-nav-link {
+  flex: 0 0 auto;
+  padding: 14px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-radius: 0;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.sec-nav-link:hover {
+  color: var(--teal);
+}
+
+.sec-nav-link.active {
+  color: var(--teal);
+  border-bottom-color: var(--teal);
+  background: var(--navy-input);
+}
+
+/* ============ RESPONSIVE DESIGN ============ */
+@media (max-width: 1024px) {
+  .class-header-top {
+    padding: 16px 24px;
+  }
+
+  .class-title {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .class-header-top {
+    padding: 12px 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .class-title {
+    font-size: 20px;
+  }
+
+  .class-quick-info {
+    width: 100%;
+    margin-top: 8px;
+    justify-content: center;
+  }
+
+  .secondary-navbar {
+    padding: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    justify-content: flex-start;
+  }
+
+  .secondary-navbar::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .sec-nav-link {
+    padding: 12px 18px;
+    font-size: 13px;
+  }
+
+  .class-dropdown {
+    min-width: 240px;
+  }
+}
+
+@media (max-width: 600px) {
+  .class-header-container {
+    gap: 0;
+  }
+
+  .class-header-top {
+    padding: 12px 16px;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .class-title {
+    font-size: 18px;
+  }
+
+  .sec-nav-link {
+    padding: 12px 14px;
+    font-size: 12px;
+  }
+
+  .course-code-badge {
+    font-size: 11px;
+    padding: 4px 10px;
+  }
+
+  .secondary-navbar {
+    justify-content: flex-start;
+  }
+}

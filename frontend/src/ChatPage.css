@@ -189,7 +189,19 @@
 }
 
 .dm-message-row.them {
-  justify-content: flex-start;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.dm-sender-label {
+  font-size: 11px;
+  color: var(--text-placeholder);
+  margin-left: 12px;
+  margin-bottom: 2px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .dm-bubble {

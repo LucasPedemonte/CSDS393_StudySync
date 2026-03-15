@@ -18,7 +18,7 @@ const LoginPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
 
-  // --- NEW STATES FOR DATABASE SYNC ---
+  // --- STATES FOR DATABASE SYNC ---
   const [showRoleSelection, setShowRoleSelection] = useState(false);
   const [tempUser, setTempUser] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
@@ -41,7 +41,7 @@ const LoginPage = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // --- NEW SYNC FUNCTION ---
+  // --- SYNC FUNCTION ---
   const syncWithBackend = async (user, role, name) => {
     try {
       const response = await fetch("http://localhost:8000/sync-user", {
@@ -65,6 +65,7 @@ const LoginPage = () => {
       alert("Could not connect to the server.");
     }
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage("");
@@ -105,11 +106,10 @@ const LoginPage = () => {
         setErrorMessage(
           "Account exists in Auth system. Please Sign In to sync your profile.",
         );
-        // Option: Automatically switch them to login after a delay or let them click
         return;
       }
 
-      // Mapping the rest of your friendly errors to the state
+      // Mapping errors to the state
       const friendly =
         code === "auth/invalid-credential"
           ? "Invalid email or password."
@@ -211,8 +211,8 @@ const LoginPage = () => {
                   className={`tab ${isLogin ? "active" : ""}`}
                   onClick={() => {
                     setIsLogin(true);
-                    setFormData({ name: "", email: "", password: "" }); // Clear fields
-                    setErrorMessage(""); // Clear old errors
+                    setFormData({ name: "", email: "", password: "" });
+                    setErrorMessage("");
                   }}
                 >
                   Sign In
@@ -222,8 +222,8 @@ const LoginPage = () => {
                   className={`tab ${!isLogin ? "active" : ""}`}
                   onClick={() => {
                     setIsLogin(false);
-                    setFormData({ name: "", email: "", password: "" }); // Clear fields
-                    setErrorMessage(""); // Clear old errors
+                    setFormData({ name: "", email: "", password: "" });
+                    setErrorMessage("");
                   }}
                 >
                   Sign Up
@@ -278,7 +278,6 @@ const LoginPage = () => {
                 >
                   <label>Password</label>
                   <div className="input-wrap">
-                    {/* The Lock Icon */}
                     <svg className="icon" viewBox="0 0 24 24">
                       <rect x="3" y="11" width="18" height="11" rx="2" />
                       <path d="M7 11V7a5 5 0 0 1 10 0v4" />
@@ -295,7 +294,6 @@ const LoginPage = () => {
                       autoComplete="current-password"
                     />
 
-                    {/* The Eye Toggle Icon */}
                     <button
                       type="button"
                       className="password-toggle-icon"
@@ -404,55 +402,35 @@ const LoginPage = () => {
             </>
           ) : (
             <div className="role-selection">
-              <h2 className="highlight">One Last Step!</h2>
+              <h2 className="role-title">One Last Step!</h2>
               <p className="tagline-sub">
                 Are you a Student, TA, or Administrator?
               </p>
-              <div
-                className="role-options"
-                style={{
-                  marginTop: "20px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "10px",
-                }}
-              >
+              <div className="role-options">
                 <button
-                  className="feature-pill"
-                  style={{
-                    cursor: "pointer",
-                    width: "100%",
-                    justifyContent: "center",
-                  }}
+                  className="role-option-btn"
                   onClick={() =>
                     syncWithBackend(tempUser, "Student", formData.name)
                   }
                 >
-                  <div className="dot" /> Student
+                  <div className="dot" />
+                  Student
                 </button>
                 <button
-                  className="feature-pill"
-                  style={{
-                    cursor: "pointer",
-                    width: "100%",
-                    justifyContent: "center",
-                  }}
+                  className="role-option-btn"
                   onClick={() => syncWithBackend(tempUser, "TA", formData.name)}
                 >
-                  <div className="dot" /> Teaching Assistant
+                  <div className="dot" />
+                  Teaching Assistant
                 </button>
                 <button
-                  className="feature-pill"
-                  style={{
-                    cursor: "pointer",
-                    width: "100%",
-                    justifyContent: "center",
-                  }}
+                  className="role-option-btn"
                   onClick={() =>
                     syncWithBackend(tempUser, "Admin", formData.name)
                   }
                 >
-                  <div className="dot" /> Administrator
+                  <div className="dot" />
+                  Administrator
                 </button>
               </div>
             </div>

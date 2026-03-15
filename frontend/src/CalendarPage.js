@@ -1,4 +1,3 @@
-import Navbar from "./Navbar";
 import "./LoginPage.css";
 import "./CalendarPage.css";
 import { useEffect, useMemo, useState } from "react";
@@ -365,7 +364,6 @@ const CalendarPage = () => {
 
   return (
     <div className="page with-navbar">
-      <Navbar />
       <div className="calendar-layout">
         <div className="calendar-main">
           <div className="month-nav">
