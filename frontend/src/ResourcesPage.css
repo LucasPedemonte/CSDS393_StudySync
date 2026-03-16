@@ -234,7 +234,7 @@
   background: var(--teal-dim);
 }
 
-.upvote-button.upvoted {
+.upvote-button.active-vote {
   border-color: var(--teal);
   color: var(--teal);
   background: var(--teal-dim);
@@ -254,7 +254,7 @@
   font-weight: 700;
 }
 
-.upvote-button.upvoted ~ .upvote-count {
+.upvote-count.active-highlight {
   color: var(--teal);
 }
 
@@ -369,6 +369,60 @@
   background: var(--teal-glow);
   box-shadow: 0 0 12px var(--teal-glow);
 }
+
+/* Container for actions at the top right of the card */
+.post-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.action-button-group {
+  display: flex;
+  gap: 8px;
+}
+
+/* The Base Outlined Icon Style (Same as the login eye icon) */
+.icon-btn-outline {
+  background: transparent; /* No solid background color */
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  font-size: 16px;
+  color: var(--text-placeholder);
+}
+
+/* Teal Flag Styling (Outlined until active) */
+.flag-outline:hover:not(:disabled),
+.flag-outline.active {
+  border-color: var(--teal);
+  color: var(--teal);
+  background: var(--teal-dim); /* Very subtle teal tint on hover */
+  box-shadow: 0 0 12px var(--teal-glow);
+}
+
+/* Red Delete Styling (Outlined until hover) */
+.delete-outline:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
+}
+
+/* Keep the flag red once it is officially flagged */
+.flag-outline.active {
+  color: #ef4444;
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+
 
 /* --- Empty State --- */
 .empty-state {

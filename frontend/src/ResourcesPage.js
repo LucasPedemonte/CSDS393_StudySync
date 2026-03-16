@@ -1,10 +1,11 @@
-import Navbar from "./Navbar";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { auth } from "./firebase";
+import { useParams } from "react-router-dom";
 import "./LoginPage.css";
 import "./ResourcesPage.css";
 
 const ResourcesPage = () => {
+  const { courseId } = useParams();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -24,7 +25,7 @@ const ResourcesPage = () => {
       if (firebaseUser) {
         try {
           const response = await fetch(
-            `http://localhost:8000/user/${firebaseUser.uid}`
+            `http://localhost:8000/user/${firebaseUser.uid}`,
           );
           if (response.ok) {
             const userData = await response.json();
@@ -43,17 +44,20 @@ const ResourcesPage = () => {
     return () => unsubscribe();
   }, []);
 
-  // Fetch posts
-  const fetchPosts = async () => {
+  // Fetch posts for this course
+  const fetchPosts = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       const params = new URLSearchParams();
+      if (courseId) {
+        params.append("course_id", courseId);
+      }
       if (currentUser?.uid) {
         params.append("current_user_uid", currentUser.uid);
       }
       const response = await fetch(
-        `http://localhost:8000/posts?${params.toString()}`
+        `http://localhost:8000/posts?${params.toString()}`,
       );
       if (!response.ok) throw new Error("Failed to fetch posts");
       const data = await response.json();
@@ -64,6 +68,25 @@ const ResourcesPage = () => {
     } finally {
       setLoading(false);
     }
+  }, [courseId, currentUser?.uid]);
+
+  const handleFlagPost = async (postId) => {
+    if (!window.confirm("Are you sure you want to flag this post for review?"))
+      return;
+    try {
+      const res = await fetch(`http://localhost:8000/posts/${postId}/flag`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        alert("Post has been flagged for TA review.");
+        // Optional: update local state to show it's flagged
+        setPosts((prev) =>
+          prev.map((p) => (p.id === postId ? { ...p, is_flagged: true } : p)),
+        );
+      }
+    } catch (err) {
+      console.error("Flagging failed", err);
+    }
   };
 
   // Initial fetch and refresh when user changes
@@ -71,7 +94,7 @@ const ResourcesPage = () => {
     if (currentUser) {
       fetchPosts();
     }
-  }, [currentUser]);
+  }, [currentUser, courseId, fetchPosts]);
 
   // Handle form input change
   const handleFormChange = (e) => {
@@ -92,7 +115,10 @@ const ResourcesPage = () => {
       setFormError("Please enter a title for your post.");
       return;
     }
-    if (formData.resource_link && !/^https?:\/\//i.test(formData.resource_link.trim())) {
+    if (
+      formData.resource_link &&
+      !/^https?:\/\//i.test(formData.resource_link.trim())
+    ) {
       setFormError("Resource link must start with http:// or https://");
       return;
     }
@@ -104,33 +130,33 @@ const ResourcesPage = () => {
 
     try {
       setIsSubmitting(true);
+      // Query parameters for metadata
+      const params = new URLSearchParams({
+        course_id: courseId || 0,
+        author_uid: currentUser.uid,
+      });
+
+      // JSON body for post content
       const response = await fetch(
-        `http://localhost:8000/posts?author_uid=${currentUser.uid}`,
+        `http://localhost:8000/posts?${params.toString()}`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             title: formData.title.trim(),
             description: formData.description.trim() || null,
             resource_link: formData.resource_link.trim() || null,
           }),
-        }
+        },
       );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || "Failed to create post");
-      }
+      if (!response.ok) throw new Error("Failed to create post");
 
-      // Clear form and refresh posts
       setFormData({ title: "", description: "", resource_link: "" });
       setShowForm(false);
       await fetchPosts();
     } catch (err) {
-      setFormError(err.message || "Failed to create post. Please try again.");
-      console.error("Error creating post:", err);
+      setFormError(err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -142,7 +168,7 @@ const ResourcesPage = () => {
     try {
       const response = await fetch(
         `http://localhost:8000/posts/${postId}/vote?user_uid=${currentUser.uid}&vote=${newVote}`,
-        { method: "POST" }
+        { method: "POST" },
       );
       if (!response.ok) throw new Error("Failed to update vote");
       // Optimistically update the post
@@ -157,7 +183,7 @@ const ResourcesPage = () => {
             };
           }
           return post;
-        })
+        }),
       );
     } catch (err) {
       console.error("Error updating vote:", err);
@@ -187,9 +213,24 @@ const ResourcesPage = () => {
     return name ? name.charAt(0).toUpperCase() : "?";
   };
 
+  const handleDeletePost = async (postId) => {
+    if (!window.confirm("Are you sure you want to delete this resource?"))
+      return;
+
+    try {
+      const response = await fetch(
+        `http://localhost:8000/posts/${postId}?user_uid=${currentUser.uid}`,
+        { method: "DELETE" },
+      );
+      if (!response.ok) throw new Error("Failed to delete post");
+      await fetchPosts();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   return (
-    <div className="page with-navbar">
-      <Navbar />
+    <div className="resources-page">
       {/* Ambient blobs */}
       <div className="blob blob-1" />
       <div className="blob blob-2" />
@@ -327,20 +368,41 @@ const ResourcesPage = () => {
               {posts.map((post) => (
                 <div key={post.id} className="post-card">
                   <div className="post-upvote-section">
+                    {/* Upvote Button */}
                     <button
-                      className={`upvote-button${post.user_vote === 1 ? " upvoted" : ""}`}
-                      onClick={() => handleVote(post.id, post.user_vote === 1 ? 0 : 1)}
+                      className={`upvote-button ${post.user_vote === 1 ? "active-vote" : ""}`}
+                      onClick={() =>
+                        handleVote(post.id, post.user_vote === 1 ? 0 : 1)
+                      }
                       title={post.user_vote === 1 ? "Remove upvote" : "Upvote"}
-                      aria-label={post.user_vote === 1 ? "Remove upvote" : "Upvote"}
+                      aria-label={
+                        post.user_vote === 1 ? "Remove upvote" : "Upvote"
+                      }
                     >
                       ▲
                     </button>
-                    <div className={`upvote-count${post.score < 0 ? " negative-score" : ""}`}>{post.score}</div>
+
+                    {/* Vote Count */}
+                    <div
+                      className={`upvote-count 
+      ${post.score < 0 ? "negative-score" : ""} 
+      ${post.user_vote !== 0 ? "active-highlight" : ""}`}
+                    >
+                      {post.score}
+                    </div>
+
+                    {/* Downvote Button */}
                     <button
-                      className={`upvote-button${post.user_vote === -1 ? " downvoted" : ""}`}
-                      onClick={() => handleVote(post.id, post.user_vote === -1 ? 0 : -1)}
-                      title={post.user_vote === -1 ? "Remove downvote" : "Downvote"}
-                      aria-label={post.user_vote === -1 ? "Remove downvote" : "Downvote"}
+                      className={`upvote-button ${post.user_vote === -1 ? "active-vote" : ""}`}
+                      onClick={() =>
+                        handleVote(post.id, post.user_vote === -1 ? 0 : -1)
+                      }
+                      title={
+                        post.user_vote === -1 ? "Remove downvote" : "Downvote"
+                      }
+                      aria-label={
+                        post.user_vote === -1 ? "Remove downvote" : "Downvote"
+                      }
                     >
                       ▼
                     </button>
@@ -353,16 +415,47 @@ const ResourcesPage = () => {
                           {getInitial(post.author_name)}
                         </div>
                         <div className="author-details">
-                          <div className="author-name">
-                            {post.author_name}
-                          </div>
+                          <div className="author-name">{post.author_name}</div>
                           <span className={`author-role ${post.author_role}`}>
                             {post.author_role}
                           </span>
                         </div>
                       </div>
-                      <div className="post-timestamp">
-                        {formatDate(post.created_at)}
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "12px",
+                        }}
+                      >
+                        <div className="post-timestamp">
+                          {formatDate(post.created_at)}
+                        </div>
+                        {/* ONLY SHOW FOR TA/ADMIN */}
+                        {(currentUser?.role === "TA" ||
+                          currentUser?.role === "Admin") && (
+                          <button
+                            onClick={() => handleDeletePost(post.id)}
+                            className="icon-btn-outline delete-outline"
+                            title="Delete Post"
+                          >
+                            🗑
+                          </button>
+                        )}
+
+                        {/* FLAG CONTENT BUTTON */}
+                        <button
+                          onClick={() => handleFlagPost(post.id)}
+                          className={`icon-btn-outline flag-outline ${post.is_flagged ? "active" : ""}`}
+                          disabled={post.is_flagged}
+                          title={
+                            post.is_flagged
+                              ? "Flagged for Review"
+                              : "Flag Content"
+                          }
+                        >
+                          {post.is_flagged ? "🚩" : "🏳"}
+                        </button>
                       </div>
                     </div>
 
