@@ -67,6 +67,7 @@ const SchedulePage = () => {
   const [calendarView, setCalendarView] = useState("mine");
   const [availabilityByEmail, setAvailabilityByEmail] = useState({});
   const [showScheduleMeetingModal, setShowScheduleMeetingModal] = useState(false);
+  const [editingSession, setEditingSession] = useState(null);
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
   const [courses, setCourses] = useState([]);
@@ -85,6 +86,18 @@ const SchedulePage = () => {
     endTime: "",
     courseId: courseId || "",
   });
+
+  const resetMeetingForm = useCallback(() => {
+    setMeetingForm({
+      title: "",
+      startTime: "",
+      endTime: "",
+      courseId: courseId || "",
+    });
+    setSelectedClassmates([]);
+    setMeetingSearchQuery("");
+    setEditingSession(null);
+  }, [courseId]);
 
   const getGoogleAccessToken = useCallback(async (prompt = "") => {
     if (!GOOGLE_CLIENT_ID) {
@@ -290,34 +303,37 @@ const SchedulePage = () => {
 
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE}/study-sessions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: meetingForm.title,
-          course_id: parseInt(meetingForm.courseId, 10),
-          session_type: selectedClassmates.length > 0 ? "group" : "solo",
-          starts_at: new Date(meetingForm.startTime).toISOString(),
-          ends_at: new Date(meetingForm.endTime).toISOString(),
-          creator_email: userEmail,
-          invitees: selectedClassmates,
-        }),
-      });
+      const response = await fetch(
+        editingSession
+          ? `${API_BASE}/study-sessions/${editingSession.id}`
+          : `${API_BASE}/study-sessions`,
+        {
+          method: editingSession ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: meetingForm.title,
+            course_id: parseInt(meetingForm.courseId, 10),
+            session_type: selectedClassmates.length > 0 ? "group" : "solo",
+            starts_at: new Date(meetingForm.startTime).toISOString(),
+            ends_at: new Date(meetingForm.endTime).toISOString(),
+            creator_email: userEmail,
+            invitees: selectedClassmates,
+          }),
+        }
+      );
 
       if (response.ok) {
         setStatus(
-          selectedClassmates.length > 0
-            ? "Class session scheduled. It is now visible in StudySync for this class."
-            : "Session scheduled to your StudySync calendar for this class."
+          editingSession
+            ? "Study meeting updated."
+            : selectedClassmates.length > 0
+              ? "Class session scheduled. It is now visible in StudySync for this class."
+              : "Session scheduled to your StudySync calendar for this class."
         );
         setShowScheduleMeetingModal(false);
-        setMeetingForm({
-          title: "",
-          startTime: "",
-          endTime: "",
-          courseId: courseId || "",
-        });
+        resetMeetingForm();
         await fetchUpcomingSessions();
+        await fetchAvailability([userEmail, ...selectedClassmates]);
         setTimeout(() => setStatus(""), 3000);
       } else {
         const error = await response.json();
@@ -330,6 +346,23 @@ const SchedulePage = () => {
       setLoading(false);
     }
   };
+
+  const openEditMeetingModal = useCallback((session) => {
+    if (session.creator_email !== userEmail) {
+      return;
+    }
+
+    setEditingSession(session);
+    setMeetingForm({
+      title: session.title,
+      startTime: toLocalDateTimeInputValue(new Date(session.starts_at)),
+      endTime: toLocalDateTimeInputValue(new Date(session.ends_at)),
+      courseId: `${session.course_id}`,
+    });
+    setSelectedClassmates(session.invitees || []);
+    setMeetingSearchQuery("");
+    setShowScheduleMeetingModal(true);
+  }, [userEmail]);
 
   useEffect(() => {
     checkGcalConnection();
@@ -557,12 +590,12 @@ const SchedulePage = () => {
 
         <div className="sidebar">
           <div className="sidebar-card google-calendar-section">
-            <div className="card-title">
-              <svg className="card-icon" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c0 1.1.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z" />
-              </svg>
-              Google Calendar
-            </div>
+              <div className="card-title">
+                <svg className="card-icon" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z" />
+                </svg>
+                Google Calendar
+              </div>
             {gcalConnected ? (
               <>
                 <div className="connection-status status-connected">✓ Synced</div>
@@ -585,11 +618,60 @@ const SchedulePage = () => {
               Quick Actions
             </div>
             <div className="quick-actions">
-              <button className="action-btn" onClick={() => setShowScheduleMeetingModal(true)}>
+              <button
+                className="action-btn"
+                onClick={() => {
+                  resetMeetingForm();
+                  setShowScheduleMeetingModal(true);
+                }}
+              >
                 + Schedule Meeting
               </button>
             </div>
           </div>
+
+          {isClassScoped && (
+            <div className="sidebar-card">
+              <div className="card-title">
+                <svg className="card-icon" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.98 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
+                </svg>
+                Class List
+              </div>
+              {classmates.length > 0 ? (
+                <div className="class-roster-list">
+                  {classmates.map((classmate) => {
+                    const isSelected = selectedClassmates.includes(classmate.email);
+                    return (
+                      <button
+                        key={classmate.email}
+                        type="button"
+                        className={`class-roster-item ${isSelected ? "selected" : ""}`}
+                        onClick={() => {
+                          setSelectedClassmates((current) =>
+                            isSelected
+                              ? current.filter((email) => email !== classmate.email)
+                              : [...current, classmate.email]
+                          );
+                          setCalendarView("compare");
+                        }}
+                      >
+                        <div className="class-roster-main">
+                          <div className="class-roster-name">{classmate.full_name}</div>
+                          <div className="class-roster-meta">{classmate.email}</div>
+                        </div>
+                        <div className="class-roster-role">{classmate.role || "Student"}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="class-session-empty">
+                  No classmates found yet for this course.
+                </p>
+              )}
+            </div>
+          )}
 
           {isClassScoped && (
             <div className="sidebar-card">
@@ -602,7 +684,10 @@ const SchedulePage = () => {
               {upcomingSessions.length > 0 ? (
                 <div className="class-session-list">
                   {upcomingSessions.slice(0, 5).map((session) => (
-                    <div key={session.id} className="class-session-item">
+                    <div
+                      key={session.id}
+                      className={`class-session-item ${session.creator_email === userEmail ? "editable" : ""}`}
+                    >
                       <div className="class-session-title">{session.title}</div>
                       <div className="class-session-meta">
                         {new Date(session.starts_at).toLocaleString([], {
@@ -612,6 +697,15 @@ const SchedulePage = () => {
                           minute: "2-digit",
                         })}
                       </div>
+                      {session.creator_email === userEmail && (
+                        <button
+                          type="button"
+                          className="session-edit-btn"
+                          onClick={() => openEditMeetingModal(session)}
+                        >
+                          Edit
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -642,9 +736,11 @@ const SchedulePage = () => {
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div>
-                <h3>Schedule Study Meeting</h3>
+                <h3>{editingSession ? "Edit Study Meeting" : "Schedule Study Meeting"}</h3>
                 <p className="modal-subtitle">
-                  Pick a time and create a StudySync session that classmates in this course can see.
+                  {editingSession
+                    ? "Update the meeting details and invited classmates."
+                    : "Pick a time and create a StudySync session that classmates in this course can see."}
                 </p>
               </div>
               <button
@@ -785,11 +881,17 @@ const SchedulePage = () => {
               </div>
             </div>
             <div className="modal-actions">
-              <button className="btn-subtle-link" onClick={() => setShowScheduleMeetingModal(false)}>
+              <button
+                className="btn-subtle-link"
+                onClick={() => {
+                  setShowScheduleMeetingModal(false);
+                  resetMeetingForm();
+                }}
+              >
                 Cancel
               </button>
               <button className="btn-submit" onClick={handleScheduleMeeting} disabled={loading}>
-                {loading ? "Scheduling..." : "Schedule Meeting"}
+                {loading ? (editingSession ? "Saving..." : "Scheduling...") : (editingSession ? "Save Changes" : "Schedule Meeting")}
               </button>
             </div>
           </div>
