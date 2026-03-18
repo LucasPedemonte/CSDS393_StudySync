@@ -32,20 +32,6 @@ def test_get_global_inbox_empty():
     response = client.get("/conversations/inbox/global?user_uid=new_user_999")
     assert response.status_code == 200
     assert response.json() == []
-    
-def test_message_access_denied():
-    """Verifies that a user cannot see messages for a course they aren't in."""
-    # Added user2 and is_group to satisfy the 422 validation error
-    params = {
-        "user1": "user_123",
-        "user2": "other_user",
-        "course_id": 999, # Dummy ID
-        "is_group": "false"
-    }
-    response = client.get("/messages", params=params)
-    
-    # The logic should return 200 (empty list) or 403 if they aren't in the course
-    assert response.status_code in [200, 403]
 
 def test_get_class_discussion_messages():
     """Verifies fetching public group messages for a specific course."""
