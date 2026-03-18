@@ -1,19 +1,43 @@
 from fastapi import FastAPI, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, text, or_
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict
 from database import engine, Base, get_db
 import models
 from typing import List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 # WARNING: This deletes all data! 
 # Uncomment once to reset the schema for your new multi-class structure.
 # Base.metadata.drop_all(bind=engine)
 
+def ensure_schema_updates():
+    """Apply minimal additive schema updates for local development."""
+    statements = [
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS google_calendar_refresh_token VARCHAR",
+        "ALTER TABLE conversations ADD COLUMN IF NOT EXISTS course_id INTEGER",
+        "ALTER TABLE study_sessions ADD COLUMN IF NOT EXISTS course_id INTEGER",
+        "ALTER TABLE posts ADD COLUMN IF NOT EXISTS course_id INTEGER",
+        "ALTER TABLE posts ADD COLUMN IF NOT EXISTS is_flagged BOOLEAN DEFAULT FALSE",
+        """
+        CREATE TABLE IF NOT EXISTS study_session_invitees (
+            id SERIAL PRIMARY KEY,
+            study_session_id INTEGER NOT NULL REFERENCES study_sessions(id),
+            user_email VARCHAR NOT NULL,
+            created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
+        )
+        """,
+    ]
+
+    with engine.begin() as connection:
+        for statement in statements:
+            connection.execute(text(statement))
+
+
 # Create tables in PostgreSQL automatically 
 Base.metadata.create_all(bind=engine)
+ensure_schema_updates()
 
 app = FastAPI()
 
@@ -310,6 +334,7 @@ def get_messages(
         models.Message.conversation_id == conversation.conversation_id
     ).order_by(models.Message.created_at.asc()).all()
 
+    users = db.query(models.User).filter(models.User.firebase_uid.in_(member_ids)).all()
     return [
         {
             "id": m.message_id,
@@ -625,10 +650,19 @@ def create_course(course_data: CourseCreate, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.firebase_uid == course_data.owner_id).first()
     if not user or user.role not in ["Admin", "TA"]:
         raise HTTPException(status_code=403, detail="Only Admins/TAs can create courses.")
+
+    normalized_code = course_data.course_code.strip().upper()
+    normalized_name = course_data.name.strip()
+    if not normalized_code or not normalized_name:
+        raise HTTPException(status_code=400, detail="Course name and code are required.")
+
+    existing_course = db.query(models.Course).filter(models.Course.course_code == normalized_code).first()
+    if existing_course:
+        raise HTTPException(status_code=400, detail="A course with that code already exists.")
     
     new_course = models.Course(
-        name=course_data.name,
-        course_code=course_data.course_code.upper(),
+        name=normalized_name,
+        course_code=normalized_code,
         owner_id=course_data.owner_id
     )
     db.add(new_course)
@@ -648,7 +682,15 @@ def join_course(
     db: Session = Depends(get_db)
 ):
     """Enrolls a student via a class code."""
-    course = db.query(models.Course).filter(models.Course.course_code == course_code.upper()).first()
+    normalized_code = course_code.strip().upper()
+    if not normalized_code:
+        raise HTTPException(status_code=400, detail="Course code is required.")
+
+    user = db.query(models.User).filter(models.User.firebase_uid == firebase_uid).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    course = db.query(models.Course).filter(models.Course.course_code == normalized_code).first()
     if not course:
         raise HTTPException(status_code=404, detail="Invalid course code.")
     
@@ -748,6 +790,7 @@ class StudySessionCreate(BaseModel):
     starts_at: str
     ends_at: str
     group_id: Optional[int] = None
+    invitees: List[str] = []
 
 
 @app.get("/study-sessions")
@@ -788,6 +831,48 @@ def get_study_sessions(
     ]
 
 
+@app.get("/study-sessions/course/{course_id}")
+def get_course_sessions(
+    course_id: int,
+    range_start: str,
+    range_end: str,
+    requester_email: str = Query(...),
+    db: Session = Depends(get_db)
+):
+    """Fetch study sessions in a course visible to the requester."""
+    start = parse_iso_to_naive(range_start)
+    end = parse_iso_to_naive(range_end)
+
+    invited_session_ids = db.query(models.StudySessionInvitee.study_session_id).filter(
+        models.StudySessionInvitee.user_email == requester_email
+    )
+
+    sessions = db.query(models.StudySession).filter(
+        models.StudySession.course_id == course_id,
+        models.StudySession.starts_at >= start,
+        models.StudySession.starts_at < end,
+        or_(
+            models.StudySession.creator_email == requester_email,
+            models.StudySession.id.in_(invited_session_ids),
+        )
+    ).order_by(models.StudySession.starts_at.asc()).all()
+
+    return [
+        {
+            "id": s.id,
+            "title": s.title,
+            "session_type": s.session_type,
+            "starts_at": s.starts_at.isoformat(),
+            "ends_at": s.ends_at.isoformat(),
+            "group_id": s.group_id,
+            "course_id": s.course_id,
+            "creator_email": s.creator_email,
+            "invitees": [invitee.user_email for invitee in s.invitees],
+        }
+        for s in sessions
+    ]
+
+
 @app.post("/study-sessions")
 def create_study_session(body: StudySessionCreate, db: Session = Depends(get_db)):
     """Creates a study session."""
@@ -796,16 +881,38 @@ def create_study_session(body: StudySessionCreate, db: Session = Depends(get_db)
         if not user or user.role not in ["TA", "Admin"]:
             raise HTTPException(status_code=403, detail="Only TAs or Admins can create Review Sessions.")
 
+    session_start = parse_iso_to_naive(body.starts_at)
+    session_end = parse_iso_to_naive(body.ends_at)
+
     session = models.StudySession(
         creator_email=body.creator_email,
         course_id=body.course_id,
         session_type=body.session_type,
         title=body.title,
-        starts_at=datetime.fromisoformat(body.starts_at.replace("Z", "+00:00")).replace(tzinfo=None),
-        ends_at=datetime.fromisoformat(body.ends_at.replace("Z", "+00:00")).replace(tzinfo=None),
+        starts_at=session_start,
+        ends_at=session_end,
         group_id=body.group_id
     )
     db.add(session)
+    db.flush()
+
+    session_participants = {body.creator_email}
+    for email in sorted(set(body.invitees)):
+        if email and email != body.creator_email:
+            db.add(models.StudySessionInvitee(
+                study_session_id=session.id,
+                user_email=email
+            ))
+            session_participants.add(email)
+
+    for email in session_participants:
+        db.add(models.UserAvailability(
+            user_email=email,
+            starts_at=session_start,
+            ends_at=session_end,
+            source="study_session"
+        ))
+
     db.commit()
     db.refresh(session)
     return {
@@ -815,7 +922,8 @@ def create_study_session(body: StudySessionCreate, db: Session = Depends(get_db)
         "starts_at": session.starts_at.isoformat(),
         "ends_at": session.ends_at.isoformat(),
         "group_id": session.group_id,
-        "course_id": session.course_id
+        "course_id": session.course_id,
+        "invitees": [invitee.user_email for invitee in session.invitees]
     }
 
 
@@ -835,11 +943,18 @@ class AvailabilitySync(BaseModel):
     busy_slots: List[BusySlot]
 
 
+def parse_iso_to_naive(value: str) -> datetime:
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is not None:
+        parsed = parsed.astimezone(timezone.utc).replace(tzinfo=None)
+    return parsed
+
+
 @app.post("/availability/sync")
 def sync_availability(body: AvailabilitySync, db: Session = Depends(get_db)):
     """Syncs busy blocks from Google Calendar."""
-    range_start = datetime.fromisoformat(body.starts_at.replace("Z", "+00:00")).replace(tzinfo=None)
-    range_end = datetime.fromisoformat(body.ends_at.replace("Z", "+00:00")).replace(tzinfo=None)
+    range_start = parse_iso_to_naive(body.starts_at)
+    range_end = parse_iso_to_naive(body.ends_at)
     
     # Delete old blocks in range to avoid duplicates
     db.query(models.UserAvailability).filter(
@@ -852,10 +967,51 @@ def sync_availability(body: AvailabilitySync, db: Session = Depends(get_db)):
     for slot in body.busy_slots:
         db.add(models.UserAvailability(
             user_email=body.user_email,
-            starts_at=datetime.fromisoformat(slot.starts_at.replace("Z", "+00:00")).replace(tzinfo=None),
-            ends_at=datetime.fromisoformat(slot.ends_at.replace("Z", "+00:00")).replace(tzinfo=None),
+            starts_at=parse_iso_to_naive(slot.starts_at),
+            ends_at=parse_iso_to_naive(slot.ends_at),
             source=body.source
         ))
         count += 1
     db.commit()
     return {"inserted_busy_blocks": count}
+
+
+@app.get("/availability/connected")
+def check_availability_connected(user_email: str = Query(...), db: Session = Depends(get_db)):
+    """Returns whether a user has synced Google Calendar availability."""
+    has_synced_availability = db.query(models.UserAvailability.id).filter(
+        models.UserAvailability.user_email == user_email,
+        models.UserAvailability.source == "google_calendar"
+    ).first() is not None
+    return {"connected": has_synced_availability, "email": user_email}
+
+
+@app.get("/availability")
+def get_availability(
+    user_emails: List[str] = Query(...),
+    time_min: str = Query(...),
+    time_max: str = Query(...),
+    db: Session = Depends(get_db)
+):
+    """Fetch busy blocks for one or more users in a time range."""
+    range_start = parse_iso_to_naive(time_min)
+    range_end = parse_iso_to_naive(time_max)
+
+    busy_blocks = db.query(models.UserAvailability).filter(
+        models.UserAvailability.user_email.in_(user_emails),
+        models.UserAvailability.starts_at < range_end,
+        models.UserAvailability.ends_at > range_start
+    ).order_by(
+        models.UserAvailability.user_email.asc(),
+        models.UserAvailability.starts_at.asc()
+    ).all()
+
+    grouped = {email: [] for email in user_emails}
+    for block in busy_blocks:
+        grouped.setdefault(block.user_email, []).append({
+            "starts_at": block.starts_at.replace(tzinfo=timezone.utc).isoformat(),
+            "ends_at": block.ends_at.replace(tzinfo=timezone.utc).isoformat(),
+            "source": block.source,
+        })
+
+    return {"availability": grouped}

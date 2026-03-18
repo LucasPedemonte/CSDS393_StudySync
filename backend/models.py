@@ -157,6 +157,7 @@ class StudySession(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     group = relationship("StudyGroup", back_populates="sessions")
+    invitees = relationship("StudySessionInvitee", back_populates="session", cascade="all, delete-orphan")
 
 
 class StudyGroupMember(Base):
@@ -179,3 +180,14 @@ class UserAvailability(Base):
     ends_at = Column(DateTime, nullable=False)
     source = Column(String, default="google_calendar")
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+
+class StudySessionInvitee(Base):
+    __tablename__ = "study_session_invitees"
+
+    id = Column(Integer, primary_key=True, index=True)
+    study_session_id = Column(Integer, ForeignKey("study_sessions.id"), nullable=False)
+    user_email = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    session = relationship("StudySession", back_populates="invitees")

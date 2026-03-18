@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import LoginPage from "./LoginPage";
 import HomePage from "./HomePage";
-import CalendarPage from "./CalendarPage";
+import SchedulePage from "./SchedulePage";
 import ChatPage from "./ChatPage";
 import ResourcesPage from "./ResourcesPage";
 import DashboardPage from "./DashboardPage";
@@ -46,7 +46,7 @@ function App() {
           <Route path="/class/:courseId/summary" element={<DashboardPage isClassScoped={true} />} />
           <Route path="/class/:courseId/resources" element={<ResourcesPage />} />
           <Route path="/class/:courseId/chat" element={<ChatPage isGlobal={false} />} />
-          <Route path="/class/:courseId/calendar" element={<CalendarPage />} />
+          <Route path="/class/:courseId/schedule" element={<SchedulePage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/home" />} />
