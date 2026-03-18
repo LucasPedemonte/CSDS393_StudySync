@@ -226,26 +226,6 @@ def get_user_courses(firebase_uid: str, db: Session = Depends(get_db)):
     return [e.course for e in enrollments]
 
 
-@app.get("/courses/{course_id}/members", response_model=List[UserSimple])
-def get_course_members(course_id: int, db: Session = Depends(get_db)):
-    """Returns all enrolled users for a course."""
-    enrollments = db.query(models.Enrollment).filter(models.Enrollment.course_id == course_id).all()
-    member_ids = [enrollment.user_id for enrollment in enrollments]
-    if not member_ids:
-        return []
-
-    users = db.query(models.User).filter(models.User.firebase_uid.in_(member_ids)).all()
-    return [
-        UserSimple(
-            firebase_uid=u.firebase_uid,
-            full_name=u.full_name,
-            email=u.email,
-            role=u.role or "Student"
-        )
-        for u in users
-    ]
-
-
 # ============ MESSAGING ENDPOINTS ============
 
 @app.post("/conversations/one-on-one")
@@ -354,6 +334,7 @@ def get_messages(
         models.Message.conversation_id == conversation.conversation_id
     ).order_by(models.Message.created_at.asc()).all()
 
+    users = db.query(models.User).filter(models.User.firebase_uid.in_(member_ids)).all()
     return [
         {
             "id": m.message_id,
@@ -446,6 +427,62 @@ def send_message(data: MessageSend, db: Session = Depends(get_db)):
         "content": new_message.content,
         "created_at": new_message.created_at.isoformat()
     }
+
+@app.get("/conversations/inbox/global")
+def get_global_inbox(user_uid: str = Query(...), db: Session = Depends(get_db)):
+    """
+    Fetches ALL active conversations for a user across ALL enrolled courses.
+    Appends course codes to group chat names.
+    """
+    # 1. Get all courses the user is enrolled in
+    enrollments = db.query(models.Enrollment).filter(models.Enrollment.user_id == user_uid).all()
+    course_ids = [e.course_id for e in enrollments]
+
+    # 2. Get all conversations (Group and Private) for those courses
+    # We join with Course to get the course_code for the label
+    conversations = db.query(models.Conversation).join(models.Course).filter(
+        models.Conversation.course_id.in_(course_ids)
+    ).all()
+
+    inbox = []
+    for conv in conversations:
+        # Check if user is a participant (for DMs) or if it's a group chat
+        is_participant = db.query(models.ConversationParticipant).filter(
+            models.ConversationParticipant.conversation_id == conv.conversation_id,
+            models.ConversationParticipant.user_id == user_uid
+        ).first()
+
+        if conv.is_group:
+            # Append Course Code to Group Name: e.g., "General Chat (CSDS393)"
+            inbox.append({
+                "conversation_id": conv.conversation_id,
+                "firebase_uid": f"GROUP_{conv.conversation_id}",
+                "full_name": conv.group_name or "Class Discussion",
+                "role": "Public Channel",
+                "is_group": True,
+                "course_code": conv.course.course_code, 
+                "course_id": conv.course_id
+            })
+        elif is_participant:
+            # For DMs, find the other person
+            other_part = db.query(models.ConversationParticipant).filter(
+                models.ConversationParticipant.conversation_id == conv.conversation_id,
+                models.ConversationParticipant.user_id != user_uid
+            ).first()
+            
+            if other_part:
+                inbox.append({
+                    "conversation_id": conv.conversation_id,
+                    "firebase_uid": other_part.user.firebase_uid,
+                    "full_name": other_part.user.full_name,
+                    "role": other_part.user.role,
+                    "is_group": False,
+                    "course_code": conv.course.course_code,
+                    "course_id": conv.course_id
+                })
+
+    return inbox
+
 
 # ============ RESOURCE/POST ENDPOINTS ============
 

@@ -123,10 +123,10 @@ const ClassHeader = () => {
           Chat
         </NavLink>
         <NavLink
-          to={`/class/${courseId}/schedule`}
+          to={`/class/${courseId}/calendar`}
           className={({ isActive }) => `sec-nav-link ${isActive ? "active" : ""}`}
         >
-          Schedule
+          Study Sessions
         </NavLink>
       </nav>
     </div>

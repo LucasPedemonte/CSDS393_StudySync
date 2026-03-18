@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback} from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { useParams } from "react-router-dom";
 import "./LoginPage.css";
@@ -29,6 +29,7 @@ const ChatPage = ({ isGlobal = true }) => {
       if (user) {
         setAuthUser(user);
         try {
+          // 1. Load User Profile
           const profileRes = await fetch(
             `http://localhost:8000/user/${user.uid}`,
           );
@@ -36,35 +37,44 @@ const ChatPage = ({ isGlobal = true }) => {
             const profileData = await profileRes.json();
             setUserProfile(profileData);
           }
-        } catch (err) {
-          console.error("Error loading user profile for chat:", err);
-        }
 
-        // Load all users for roster
-        try {
-          const usersRes = await fetch("http://localhost:8000/users");
-          if (usersRes.ok) {
-            const allUsers = await usersRes.json();
-            let filtered = allUsers.filter((u) => u.firebase_uid !== user.uid);
+          // 2. Logic Switch: Global Inbox vs. Class Roster
+          if (isGlobal) {
+            // GLOBAL VIEW: Fetch only active conversations from across all classes
+            const inboxRes = await fetch(
+              `http://localhost:8000/conversations/inbox/global?user_uid=${user.uid}`,
+            );
+            if (inboxRes.ok) {
+              const activeConversations = await inboxRes.json();
+              setUsers(activeConversations);
+              if (activeConversations.length > 0)
+                setSelectedUser(activeConversations[0]);
+            }
+          } else {
+            // CLASS VIEW: Fetch all students/TAs in the system so you can start new chats
+            const usersRes = await fetch("http://localhost:8000/users");
+            if (usersRes.ok) {
+              const allUsers = await usersRes.json();
+              // Filter out yourself
+              let filtered = allUsers.filter(
+                (u) => u.firebase_uid !== user.uid,
+              );
 
-            // ADD THE CLASS CHAT LOGIC HERE
-            if (!isGlobal && courseId) {
+              // Create the Class Chat sentinel for this specific course
               const classChatEntry = {
-                firebase_uid: "CLASS_GROUP_ID", // Sentinel ID
+                firebase_uid: `GROUP_${courseId}`, // Unique ID for this course group
                 full_name: "Class Discussion",
                 role: "Public Channel",
                 is_group: true,
                 course_id: courseId,
               };
-              setUsers([classChatEntry, ...filtered]); // Put it at the top
-              setSelectedUser(classChatEntry); // Default to class chat
-            } else {
-              setUsers(filtered);
-              if (filtered.length > 0) setSelectedUser(filtered[0]);
+
+              setUsers([classChatEntry, ...filtered]);
+              setSelectedUser(classChatEntry); // Default to the class group chat
             }
           }
         } catch (err) {
-          console.error(err);
+          console.error("Error loading chat roster:", err);
         }
       }
       setLoading(false);
@@ -72,60 +82,56 @@ const ChatPage = ({ isGlobal = true }) => {
     return () => unsubscribe();
   }, [isGlobal, courseId]);
 
-  // Fetch messages between authUser and selectedUser (scoped to course if not global)
-  const loadMessages = async (currentUser, otherUser) => {
-  if (!currentUser || !otherUser) return;
-  try {
-    const params = new URLSearchParams();
-    params.append("user1", currentUser.uid);
-    params.append("user2", otherUser.firebase_uid);
-    params.append("is_group", otherUser.is_group || false); // Add this!
-    if (!isGlobal && courseId) {
-      params.append("course_id", courseId);
-    }
+  const loadMessages = useCallback(async (currentUser, otherUser) => {
+    if (!currentUser || !otherUser) return;
+    try {
+      const params = new URLSearchParams();
+      params.append("user1", currentUser.uid);
+      params.append("user2", otherUser.firebase_uid);
+      params.append("is_group", otherUser.is_group || false);
 
-    const res = await fetch(`http://localhost:8000/messages?${params.toString()}`);
-    if (res.ok) {
-      const data = await res.json();
-      setMessages(data);
+      // Use the course ID from the user object (Global) OR the URL (Class Page)
+      const activeCourseId = otherUser.course_id || courseId;
+      if (activeCourseId) {
+        params.append("course_id", activeCourseId);
+      }
+
+      const res = await fetch(
+        `http://localhost:8000/messages?${params.toString()}`,
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setMessages(data);
+      }
+    } catch (err) {
+      console.error("Error loading messages:", err);
     }
-  } catch (err) {
-    console.error("Error loading messages:", err);
-  }
-};
+  }, [courseId]);
 
   // Initial + polling load of messages when selectedUser changes
   useEffect(() => {
     if (!authUser || !selectedUser) return;
-
-    // Initial load
     loadMessages(authUser, selectedUser);
-
-    // Poll every few seconds
     const interval = setInterval(() => {
       loadMessages(authUser, selectedUser);
     }, 3000);
-
     return () => clearInterval(interval);
-  }, [authUser, selectedUser, isGlobal, courseId]);
+  }, [authUser, selectedUser, loadMessages]);
 
+  // 2. Use conversation-specific course IDs
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (
-      !authUser ||
-      !selectedUser ||
-      !selectedUser.firebase_uid ||
-      !newMessage.trim()
-    )
-      return;
+    if (!authUser || !selectedUser || !newMessage.trim()) return;
 
     setSending(true);
     try {
+      // Determine correct course context for the message
+      const targetCourseId = selectedUser.course_id || courseId;
+
       const payload = {
         sender_uid: authUser.uid,
         content: newMessage.trim(),
-        course_id: parseInt(courseId || 0),
-        // If group is selected, handle receiver_uid differently on backend
+        course_id: parseInt(targetCourseId || 0),
         receiver_uid: selectedUser.is_group
           ? "GROUP"
           : selectedUser.firebase_uid,
@@ -141,14 +147,9 @@ const ChatPage = ({ isGlobal = true }) => {
       if (res.ok) {
         setNewMessage("");
         loadMessages(authUser, selectedUser);
-      } else {
-        const errorData = await res.json();
-        console.error("Failed to send message:", errorData);
-        alert(`Error: ${errorData.detail || "Could not send message"}`);
       }
     } catch (err) {
       console.error("Error sending message:", err);
-      alert("Network error sending message.");
     } finally {
       setSending(false);
     }
@@ -180,7 +181,6 @@ const ChatPage = ({ isGlobal = true }) => {
     <div className="page with-navbar">
       <div className="dm-page">
         <div className="dm-shell">
-          {/* Left sidebar like Instagram user list + profile */}
           <aside className="dm-sidebar">
             <div className="dm-sidebar-header">
               <h2 className="dm-sidebar-title">Messages</h2>
@@ -191,10 +191,10 @@ const ChatPage = ({ isGlobal = true }) => {
               )}
             </div>
 
-            <div className="dm-list-label">Chats</div>
+            <div className="dm-list-label">Active Conversations</div>
             <div className="dm-user-list">
               {users.length === 0 && (
-                <p className="dm-empty-text">No other users yet.</p>
+                <p className="dm-empty-text">No active chats in this view.</p>
               )}
               {users.map((u) => {
                 const isActive = selectedUser?.firebase_uid === u.firebase_uid;
@@ -206,16 +206,14 @@ const ChatPage = ({ isGlobal = true }) => {
                     onClick={() => setSelectedUser(u)}
                   >
                     <div className="dm-avatar">
-                      {u.full_name
-                        ?.split(" ")
-                        .map((part) => part[0])
-                        .join("")
-                        .slice(0, 2)
-                        .toUpperCase() || "U"}
+                      {u.full_name?.charAt(0).toUpperCase() || "U"}
                     </div>
                     <div className="dm-user-meta">
+                      {/* Name will now include (Course Code) from the backend */}
                       <div className="dm-user-name">{u.full_name}</div>
-                      <div className="dm-user-role">{u.role}</div>
+                      <div className="dm-user-role">
+                        {u.role} {u.course_code ? `· ${u.course_code}` : ""}
+                      </div>
                     </div>
                   </button>
                 );
@@ -223,40 +221,22 @@ const ChatPage = ({ isGlobal = true }) => {
             </div>
           </aside>
 
-          {/* Right main chat pane */}
           <section className="dm-main">
             <header className="dm-main-header">
-              {selectedUser ? (
-                <>
-                  <div className="dm-main-user">
-                    <div className="dm-avatar dm-avatar-sm">
-                      {selectedUser.full_name
-                        ?.split(" ")
-                        .map((part) => part[0])
-                        .join("")
-                        .slice(0, 2)
-                        .toUpperCase() || "U"}
-                    </div>
-                    <div>
-                      <div className="dm-main-name">
-                        {selectedUser.full_name}
-                      </div>
-                      <div className="dm-main-role">{selectedUser.role}</div>
-                    </div>
+              {selectedUser && (
+                <div className="dm-main-user">
+                  <div className="dm-main-name">{selectedUser.full_name}</div>
+                  <div className="dm-main-role">
+                    {selectedUser.role}{" "}
+                    {selectedUser.course_code
+                      ? `· ${selectedUser.course_code}`
+                      : ""}
                   </div>
-                </>
-              ) : (
-                <div className="dm-main-empty">
-                  Select a user from the left to start a conversation.
                 </div>
               )}
             </header>
 
-            {/* Messages scroll area */}
             <div className="dm-messages">
-              {selectedUser && messages.length === 0 && (
-                <p className="dm-empty-text">No messages yet. Say hi!</p>
-              )}
               {messages.map((m) => {
                 const isMe = m.sender_uid === authUser?.uid;
                 return (
@@ -264,7 +244,6 @@ const ChatPage = ({ isGlobal = true }) => {
                     key={m.id}
                     className={`dm-message-row ${isMe ? "me" : "them"}`}
                   >
-                    {/* Show sender name for everyone else in a group context */}
                     {!isMe && selectedUser?.is_group && (
                       <span className="dm-sender-label">{m.sender_name}</span>
                     )}
@@ -274,23 +253,18 @@ const ChatPage = ({ isGlobal = true }) => {
               })}
             </div>
 
-            {/* Input bar pinned to bottom, full width of chat column */}
             <form className="dm-input-bar" onSubmit={handleSendMessage}>
               <input
                 type="text"
-                placeholder={
-                  selectedUser
-                    ? "Message..."
-                    : "Select a user from the left to start messaging"
-                }
+                placeholder="Message..."
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 disabled={!selectedUser || sending}
               />
               <button
                 type="submit"
-                className="btn-submit dm-send-btn"
-                disabled={!selectedUser || sending || !newMessage.trim()}
+                className="btn-submit chat-send-btn"
+                disabled={!newMessage.trim()}
               >
                 Send
               </button>

@@ -245,10 +245,13 @@
   color: var(--text-placeholder);
 }
 
-.dm-send-btn {
-  width: auto;
-  padding-inline: 18px;
-  font-size: 0.9rem;
+.dm-input-bar .chat-send-btn {
+    width: auto; 
+    
+    flex-shrink: 0; 
+    padding: 8px 20px;
+    height: 46px;
+    margin: 0;
 }
 
 .dm-empty-text {
