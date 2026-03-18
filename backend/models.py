@@ -79,7 +79,7 @@ class ConversationParticipant(Base):
     
     participant_id = Column(Integer, primary_key=True, index=True)
     conversation_id = Column(Integer, ForeignKey("conversations.conversation_id"), nullable=False)
-    user_id = Column(String, ForeignKey("users.firebase_uid"), nullable=False)
+    user_id = Column("user_uid", String, ForeignKey("users.firebase_uid"), nullable=False)
     joined_at = Column(DateTime, default=datetime.datetime.utcnow)
     
     # Relationships
@@ -90,9 +90,9 @@ class ConversationParticipant(Base):
 class Message(Base):
     __tablename__ = "messages"
     
-    message_id = Column(Integer, primary_key=True, index=True)
+    message_id = Column("id", Integer, primary_key=True, index=True)
     conversation_id = Column(Integer, ForeignKey("conversations.conversation_id"), nullable=False)
-    sender_id = Column(String, ForeignKey("users.firebase_uid"), nullable=False)
+    sender_id = Column("sender_uid", String, ForeignKey("users.firebase_uid"), nullable=False)
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     
@@ -179,6 +179,7 @@ class UserAvailability(Base):
     starts_at = Column(DateTime, nullable=False)
     ends_at = Column(DateTime, nullable=False)
     source = Column(String, default="google_calendar")
+    study_session_id = Column(Integer, ForeignKey("study_sessions.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
 

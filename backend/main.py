@@ -20,6 +20,10 @@ def ensure_schema_updates():
         "ALTER TABLE study_sessions ADD COLUMN IF NOT EXISTS course_id INTEGER",
         "ALTER TABLE posts ADD COLUMN IF NOT EXISTS course_id INTEGER",
         "ALTER TABLE posts ADD COLUMN IF NOT EXISTS is_flagged BOOLEAN DEFAULT FALSE",
+        "ALTER TABLE user_availability ADD COLUMN IF NOT EXISTS study_session_id INTEGER",
+        "ALTER TABLE messages ADD COLUMN IF NOT EXISTS conversation_id INTEGER",
+        "ALTER TABLE messages ADD COLUMN IF NOT EXISTS sender_id VARCHAR",
+        "ALTER TABLE conversation_participants ADD COLUMN IF NOT EXISTS user_uid VARCHAR",
         """
         CREATE TABLE IF NOT EXISTS study_session_invitees (
             id SERIAL PRIMARY KEY,
@@ -27,6 +31,76 @@ def ensure_schema_updates():
             user_email VARCHAR NOT NULL,
             created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
         )
+        """,
+        """
+        DO $$
+        BEGIN
+            IF EXISTS (
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_name = 'messages' AND column_name = 'sender_uid'
+            ) THEN
+                UPDATE messages
+                SET sender_id = sender_uid
+                WHERE sender_id IS NULL;
+            END IF;
+        END $$;
+        """,
+        """
+        DO $$
+        BEGIN
+            IF EXISTS (
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_name = 'messages' AND column_name = 'sender_uid'
+            ) THEN
+                ALTER TABLE messages ALTER COLUMN sender_uid DROP NOT NULL;
+            END IF;
+        END $$;
+        """,
+        """
+        DO $$
+        BEGIN
+            IF EXISTS (
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_name = 'messages' AND column_name = 'receiver_uid'
+            ) THEN
+                ALTER TABLE messages ALTER COLUMN receiver_uid DROP NOT NULL;
+            END IF;
+        END $$;
+        """,
+        """
+        DO $$
+        BEGIN
+            IF EXISTS (
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_name = 'conversation_participants' AND column_name = 'user_id'
+            ) AND EXISTS (
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_name = 'users' AND column_name = 'user_id'
+            ) THEN
+                UPDATE conversation_participants cp
+                SET user_uid = u.firebase_uid
+                FROM users u
+                WHERE cp.user_uid IS NULL
+                  AND cp.user_id::text = u.user_id::text;
+            END IF;
+        END $$;
+        """,
+        """
+        DO $$
+        BEGIN
+            IF EXISTS (
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_name = 'conversation_participants' AND column_name = 'user_id'
+            ) THEN
+                ALTER TABLE conversation_participants ALTER COLUMN user_id DROP NOT NULL;
+            END IF;
+        END $$;
         """,
     ]
 
@@ -130,6 +204,68 @@ class CourseResponse(BaseModel):
     description: Optional[str]
 
 
+def find_direct_conversation(db: Session, course_id: int, user_uid_1: str, user_uid_2: str):
+    """Find a 1-on-1 conversation using either legacy or current participant columns."""
+    row = db.execute(
+        text(
+            """
+            SELECT c.conversation_id
+            FROM conversations c
+            JOIN conversation_participants cp
+              ON c.conversation_id = cp.conversation_id
+            WHERE c.course_id = :course_id
+              AND c.is_group = FALSE
+              AND COALESCE(cp.user_uid, cp.user_id::text) IN (:user1, :user2)
+            GROUP BY c.conversation_id
+            HAVING COUNT(DISTINCT COALESCE(cp.user_uid, cp.user_id::text)) = 2
+            LIMIT 1
+            """
+        ),
+        {"course_id": course_id, "user1": user_uid_1, "user2": user_uid_2},
+    ).first()
+
+    if not row:
+        return None
+
+    return db.query(models.Conversation).filter(
+        models.Conversation.conversation_id == row[0]
+    ).first()
+
+
+def conversation_has_participant(db: Session, conversation_id: int, user_uid: str) -> bool:
+    row = db.execute(
+        text(
+            """
+            SELECT 1
+            FROM conversation_participants cp
+            WHERE cp.conversation_id = :conversation_id
+              AND COALESCE(cp.user_uid, cp.user_id::text) = :user_uid
+            LIMIT 1
+            """
+        ),
+        {"conversation_id": conversation_id, "user_uid": user_uid},
+    ).first()
+    return row is not None
+
+
+def get_other_participant_uid(db: Session, conversation_id: int, user_uid: str) -> Optional[str]:
+    row = db.execute(
+        text(
+            """
+            SELECT COALESCE(cp.user_uid, cp.user_id::text) AS participant_uid
+            FROM conversation_participants cp
+            WHERE cp.conversation_id = :conversation_id
+              AND COALESCE(cp.user_uid, cp.user_id::text) != :user_uid
+            LIMIT 1
+            """
+        ),
+        {"conversation_id": conversation_id, "user_uid": user_uid},
+    ).first()
+    if not row:
+        return None
+    return row[0]
+
+
 # ============ USER ENDPOINTS ============
 
 @app.post("/sync-user")
@@ -226,28 +362,40 @@ def get_user_courses(firebase_uid: str, db: Session = Depends(get_db)):
     return [e.course for e in enrollments]
 
 
+@app.get("/courses/{course_id}/members", response_model=List[UserSimple])
+def get_course_members(course_id: int, db: Session = Depends(get_db)):
+    """Returns all enrolled users for a course."""
+    enrollments = db.query(models.Enrollment).filter(models.Enrollment.course_id == course_id).all()
+    member_ids = [enrollment.user_id for enrollment in enrollments]
+    if not member_ids:
+        return []
+
+    users = db.query(models.User).filter(models.User.firebase_uid.in_(member_ids)).all()
+    return [
+        UserSimple(
+            firebase_uid=u.firebase_uid,
+            full_name=u.full_name,
+            email=u.email,
+            role=u.role or "Student"
+        )
+        for u in users
+    ]
+
+
 # ============ MESSAGING ENDPOINTS ============
 
 @app.post("/conversations/one-on-one")
 def get_or_create_one_on_one(
-    user_uid_1: str,
-    user_uid_2: str,
-    course_id: int,
+    user_uid_1: str, 
+    user_uid_2: str, 
+    course_id: int, 
     db: Session = Depends(get_db)
 ):
     """Creates or retrieves a 1-on-1 DM scoped to a specific course."""
     if user_uid_1 == user_uid_2:
         raise HTTPException(status_code=400, detail="Cannot chat with yourself.")
 
-    # Look for existing 1-on-1 in this specific course context
-    existing = db.query(models.Conversation).filter(
-        models.Conversation.is_group == False,
-        models.Conversation.course_id == course_id
-    ).join(models.ConversationParticipant).filter(
-        models.ConversationParticipant.user_id.in_([user_uid_1, user_uid_2])
-    ).group_by(models.Conversation.conversation_id).having(
-        func.count(models.ConversationParticipant.participant_id) == 2
-    ).first()
+    existing = find_direct_conversation(db, course_id, user_uid_1, user_uid_2)
 
     if existing:
         return {"conversation_id": existing.conversation_id, "is_new": False}
@@ -315,15 +463,7 @@ def get_messages(
             models.Conversation.is_group == True
         ).first()
     else:
-        # 2. Look for the private 1-on-1 conversation
-        conversation = db.query(models.Conversation).filter(
-            models.Conversation.course_id == course_id,
-            models.Conversation.is_group == False
-        ).join(models.ConversationParticipant).filter(
-            models.ConversationParticipant.user_id.in_([user1, user2])
-        ).group_by(models.Conversation.conversation_id).having(
-            func.count(models.ConversationParticipant.participant_id) == 2
-        ).first()
+        conversation = find_direct_conversation(db, course_id, user1, user2)
 
     # If no conversation exists yet, return an empty list instead of crashing
     if not conversation:
@@ -334,12 +474,11 @@ def get_messages(
         models.Message.conversation_id == conversation.conversation_id
     ).order_by(models.Message.created_at.asc()).all()
 
-    users = db.query(models.User).filter(models.User.firebase_uid.in_(member_ids)).all()
     return [
         {
             "id": m.message_id,
             "sender_uid": m.sender_id,
-            "sender_name": m.sender.full_name,
+            "sender_name": m.sender.full_name if m.sender else "Unknown User",
             "content": m.content,
             "created_at": m.created_at.isoformat()
         }
@@ -394,14 +533,9 @@ def send_message(data: MessageSend, db: Session = Depends(get_db)):
             db.flush()
     else:
         # 2. 1-on-1 DM LOGIC (Existing logic)
-        conversation = db.query(models.Conversation).filter(
-            models.Conversation.is_group == False,
-            models.Conversation.course_id == data.course_id
-        ).join(models.ConversationParticipant).filter(
-            models.ConversationParticipant.user_id.in_([data.sender_uid, data.receiver_uid])
-        ).group_by(models.Conversation.conversation_id).having(
-            func.count(models.ConversationParticipant.participant_id) == 2
-        ).first()
+        conversation = find_direct_conversation(
+            db, data.course_id, data.sender_uid, data.receiver_uid
+        )
 
         if not conversation:
             conversation = models.Conversation(is_group=False, course_id=data.course_id)
@@ -447,10 +581,7 @@ def get_global_inbox(user_uid: str = Query(...), db: Session = Depends(get_db)):
     inbox = []
     for conv in conversations:
         # Check if user is a participant (for DMs) or if it's a group chat
-        is_participant = db.query(models.ConversationParticipant).filter(
-            models.ConversationParticipant.conversation_id == conv.conversation_id,
-            models.ConversationParticipant.user_id == user_uid
-        ).first()
+        is_participant = conversation_has_participant(db, conv.conversation_id, user_uid)
 
         if conv.is_group:
             # Append Course Code to Group Name: e.g., "General Chat (CSDS393)"
@@ -465,17 +596,19 @@ def get_global_inbox(user_uid: str = Query(...), db: Session = Depends(get_db)):
             })
         elif is_participant:
             # For DMs, find the other person
-            other_part = db.query(models.ConversationParticipant).filter(
-                models.ConversationParticipant.conversation_id == conv.conversation_id,
-                models.ConversationParticipant.user_id != user_uid
-            ).first()
-            
-            if other_part:
+            other_part_uid = get_other_participant_uid(db, conv.conversation_id, user_uid)
+            other_user = None
+            if other_part_uid:
+                other_user = db.query(models.User).filter(
+                    models.User.firebase_uid == other_part_uid
+                ).first()
+
+            if other_user:
                 inbox.append({
                     "conversation_id": conv.conversation_id,
-                    "firebase_uid": other_part.user.firebase_uid,
-                    "full_name": other_part.user.full_name,
-                    "role": other_part.user.role,
+                    "firebase_uid": other_user.firebase_uid,
+                    "full_name": other_user.full_name,
+                    "role": other_user.role,
                     "is_group": False,
                     "course_code": conv.course.course_code,
                     "course_id": conv.course_id
@@ -802,11 +935,12 @@ def get_study_sessions(
     db: Session = Depends(get_db)
 ):
     """Fetches study sessions for a user, optionally filtered by course."""
+    normalized_user_email = normalize_email(user_email)
     start = datetime.fromisoformat(range_start.replace("Z", "+00:00")).replace(tzinfo=None)
     end = datetime.fromisoformat(range_end.replace("Z", "+00:00")).replace(tzinfo=None)
     
     query = db.query(models.StudySession).filter(
-        models.StudySession.creator_email == user_email,
+        models.StudySession.creator_email == normalized_user_email,
         models.StudySession.starts_at >= start,
         models.StudySession.starts_at < end
     )
@@ -840,11 +974,12 @@ def get_course_sessions(
     db: Session = Depends(get_db)
 ):
     """Fetch study sessions in a course visible to the requester."""
+    normalized_requester_email = normalize_email(requester_email)
     start = parse_iso_to_naive(range_start)
     end = parse_iso_to_naive(range_end)
 
     invited_session_ids = db.query(models.StudySessionInvitee.study_session_id).filter(
-        models.StudySessionInvitee.user_email == requester_email
+        models.StudySessionInvitee.user_email == normalized_requester_email
     )
 
     sessions = db.query(models.StudySession).filter(
@@ -852,7 +987,7 @@ def get_course_sessions(
         models.StudySession.starts_at >= start,
         models.StudySession.starts_at < end,
         or_(
-            models.StudySession.creator_email == requester_email,
+            models.StudySession.creator_email == normalized_requester_email,
             models.StudySession.id.in_(invited_session_ids),
         )
     ).order_by(models.StudySession.starts_at.asc()).all()
@@ -876,8 +1011,15 @@ def get_course_sessions(
 @app.post("/study-sessions")
 def create_study_session(body: StudySessionCreate, db: Session = Depends(get_db)):
     """Creates a study session."""
+    normalized_creator_email = normalize_email(body.creator_email)
+    normalized_invitees = sorted({
+        normalize_email(email)
+        for email in body.invitees
+        if email and normalize_email(email) != normalized_creator_email
+    })
+
     if body.session_type == "TA_review":
-        user = db.query(models.User).filter(models.User.email == body.creator_email).first()
+        user = db.query(models.User).filter(models.User.email == normalized_creator_email).first()
         if not user or user.role not in ["TA", "Admin"]:
             raise HTTPException(status_code=403, detail="Only TAs or Admins can create Review Sessions.")
 
@@ -885,7 +1027,7 @@ def create_study_session(body: StudySessionCreate, db: Session = Depends(get_db)
     session_end = parse_iso_to_naive(body.ends_at)
 
     session = models.StudySession(
-        creator_email=body.creator_email,
+        creator_email=normalized_creator_email,
         course_id=body.course_id,
         session_type=body.session_type,
         title=body.title,
@@ -896,22 +1038,22 @@ def create_study_session(body: StudySessionCreate, db: Session = Depends(get_db)
     db.add(session)
     db.flush()
 
-    session_participants = {body.creator_email}
-    for email in sorted(set(body.invitees)):
-        if email and email != body.creator_email:
+    session_participants = {normalized_creator_email}
+    for email in normalized_invitees:
+        if email != normalized_creator_email:
             db.add(models.StudySessionInvitee(
                 study_session_id=session.id,
                 user_email=email
             ))
             session_participants.add(email)
 
-    for email in session_participants:
-        db.add(models.UserAvailability(
-            user_email=email,
-            starts_at=session_start,
-            ends_at=session_end,
-            source="study_session"
-        ))
+    apply_study_session_availability(
+        db=db,
+        session_id=session.id,
+        session_start=session_start,
+        session_end=session_end,
+        participants=session_participants,
+    )
 
     db.commit()
     db.refresh(session)
@@ -924,6 +1066,72 @@ def create_study_session(body: StudySessionCreate, db: Session = Depends(get_db)
         "group_id": session.group_id,
         "course_id": session.course_id,
         "invitees": [invitee.user_email for invitee in session.invitees]
+    }
+
+
+@app.put("/study-sessions/{session_id}")
+def update_study_session(
+    session_id: int,
+    body: StudySessionCreate,
+    db: Session = Depends(get_db)
+):
+    """Updates an existing study session and refreshes invitees/busy blocks."""
+    normalized_creator_email = normalize_email(body.creator_email)
+    normalized_invitees = sorted({
+        normalize_email(email)
+        for email in body.invitees
+        if email and normalize_email(email) != normalized_creator_email
+    })
+
+    session = db.query(models.StudySession).filter(models.StudySession.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Study session not found.")
+
+    if session.creator_email != normalized_creator_email:
+        raise HTTPException(status_code=403, detail="Only the meeting creator can edit this session.")
+
+    session_start = parse_iso_to_naive(body.starts_at)
+    session_end = parse_iso_to_naive(body.ends_at)
+
+    session.title = body.title.strip()
+    session.course_id = body.course_id
+    session.session_type = body.session_type
+    session.starts_at = session_start
+    session.ends_at = session_end
+    session.group_id = body.group_id
+
+    db.query(models.StudySessionInvitee).filter(
+        models.StudySessionInvitee.study_session_id == session_id
+    ).delete(synchronize_session=False)
+
+    session_participants = {normalized_creator_email}
+    for email in normalized_invitees:
+        db.add(models.StudySessionInvitee(
+            study_session_id=session_id,
+            user_email=email
+        ))
+        session_participants.add(email)
+
+    apply_study_session_availability(
+        db=db,
+        session_id=session_id,
+        session_start=session_start,
+        session_end=session_end,
+        participants=session_participants,
+    )
+
+    db.commit()
+    db.refresh(session)
+    return {
+        "id": session.id,
+        "title": session.title,
+        "session_type": session.session_type,
+        "starts_at": session.starts_at.isoformat(),
+        "ends_at": session.ends_at.isoformat(),
+        "group_id": session.group_id,
+        "course_id": session.course_id,
+        "creator_email": session.creator_email,
+        "invitees": [invitee.user_email for invitee in session.invitees],
     }
 
 
@@ -950,15 +1158,41 @@ def parse_iso_to_naive(value: str) -> datetime:
     return parsed
 
 
+def normalize_email(value: str) -> str:
+    return value.strip().lower()
+
+
+def apply_study_session_availability(
+    db: Session,
+    session_id: int,
+    session_start: datetime,
+    session_end: datetime,
+    participants: set[str],
+):
+    db.query(models.UserAvailability).filter(
+        models.UserAvailability.study_session_id == session_id
+    ).delete(synchronize_session=False)
+
+    for email in participants:
+        db.add(models.UserAvailability(
+            user_email=email,
+            starts_at=session_start,
+            ends_at=session_end,
+            source="study_session",
+            study_session_id=session_id,
+        ))
+
+
 @app.post("/availability/sync")
 def sync_availability(body: AvailabilitySync, db: Session = Depends(get_db)):
     """Syncs busy blocks from Google Calendar."""
+    normalized_user_email = normalize_email(body.user_email)
     range_start = parse_iso_to_naive(body.starts_at)
     range_end = parse_iso_to_naive(body.ends_at)
     
     # Delete old blocks in range to avoid duplicates
     db.query(models.UserAvailability).filter(
-        models.UserAvailability.user_email == body.user_email,
+        models.UserAvailability.user_email == normalized_user_email,
         models.UserAvailability.starts_at >= range_start,
         models.UserAvailability.ends_at <= range_end
     ).delete(synchronize_session=False)
@@ -966,7 +1200,7 @@ def sync_availability(body: AvailabilitySync, db: Session = Depends(get_db)):
     count = 0
     for slot in body.busy_slots:
         db.add(models.UserAvailability(
-            user_email=body.user_email,
+            user_email=normalized_user_email,
             starts_at=parse_iso_to_naive(slot.starts_at),
             ends_at=parse_iso_to_naive(slot.ends_at),
             source=body.source
@@ -979,11 +1213,12 @@ def sync_availability(body: AvailabilitySync, db: Session = Depends(get_db)):
 @app.get("/availability/connected")
 def check_availability_connected(user_email: str = Query(...), db: Session = Depends(get_db)):
     """Returns whether a user has synced Google Calendar availability."""
+    normalized_user_email = normalize_email(user_email)
     has_synced_availability = db.query(models.UserAvailability.id).filter(
-        models.UserAvailability.user_email == user_email,
+        models.UserAvailability.user_email == normalized_user_email,
         models.UserAvailability.source == "google_calendar"
     ).first() is not None
-    return {"connected": has_synced_availability, "email": user_email}
+    return {"connected": has_synced_availability, "email": normalized_user_email}
 
 
 @app.get("/availability")
@@ -994,11 +1229,12 @@ def get_availability(
     db: Session = Depends(get_db)
 ):
     """Fetch busy blocks for one or more users in a time range."""
+    normalized_user_emails = [normalize_email(email) for email in user_emails]
     range_start = parse_iso_to_naive(time_min)
     range_end = parse_iso_to_naive(time_max)
 
     busy_blocks = db.query(models.UserAvailability).filter(
-        models.UserAvailability.user_email.in_(user_emails),
+        models.UserAvailability.user_email.in_(normalized_user_emails),
         models.UserAvailability.starts_at < range_end,
         models.UserAvailability.ends_at > range_start
     ).order_by(
@@ -1006,7 +1242,7 @@ def get_availability(
         models.UserAvailability.starts_at.asc()
     ).all()
 
-    grouped = {email: [] for email in user_emails}
+    grouped = {email: [] for email in normalized_user_emails}
     for block in busy_blocks:
         grouped.setdefault(block.user_email, []).append({
             "starts_at": block.starts_at.replace(tzinfo=timezone.utc).isoformat(),

@@ -310,11 +310,70 @@
   gap: 10px;
 }
 
+.class-roster-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.class-roster-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(126, 152, 202, 0.12);
+  background: rgba(255, 255, 255, 0.035);
+  color: #eef5ff;
+  text-align: left;
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+
+.class-roster-item:hover,
+.class-roster-item.selected {
+  border-color: rgba(117, 187, 255, 0.3);
+  background: rgba(117, 187, 255, 0.12);
+}
+
+.class-roster-main {
+  min-width: 0;
+}
+
+.class-roster-name {
+  color: #f6fbff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.class-roster-meta {
+  margin-top: 4px;
+  color: #9fb0cf;
+  font-size: 12px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.class-roster-role {
+  flex-shrink: 0;
+  color: #7ec3ff;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 .class-session-item {
   padding: 12px 14px;
   border-radius: 16px;
   border: 1px solid rgba(126, 152, 202, 0.12);
   background: rgba(255, 255, 255, 0.035);
+}
+
+.class-session-item.editable {
+  border-color: rgba(117, 187, 255, 0.18);
 }
 
 .class-session-title {
@@ -329,6 +388,26 @@
   color: #9fb0cf;
   font-size: 12px;
   line-height: 1.5;
+}
+
+.session-edit-btn {
+  margin-top: 10px;
+  appearance: none;
+  border: 1px solid rgba(126, 152, 202, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+  color: #dce6f7;
+  border-radius: 12px;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+
+.session-edit-btn:hover {
+  color: #ffffff;
+  border-color: rgba(117, 187, 255, 0.34);
+  background: rgba(117, 187, 255, 0.12);
 }
 
 .card-title {
