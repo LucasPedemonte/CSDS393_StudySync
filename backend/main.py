@@ -14,6 +14,11 @@ from datetime import datetime, timedelta, timezone
 
 def ensure_schema_updates():
     """Apply minimal additive schema updates for local development."""
+    # Skip schema updates for SQLite (used in testing)
+    from database import SQLALCHEMY_DATABASE_URL
+    if "sqlite" in SQLALCHEMY_DATABASE_URL.lower():
+        return
+        
     statements = [
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS google_calendar_refresh_token VARCHAR",
         "ALTER TABLE conversations ADD COLUMN IF NOT EXISTS course_id INTEGER",
