@@ -10,6 +10,8 @@ import {
 import { useParams } from "react-router-dom";
 import "./DashboardPage.css";
 
+const API_BASE = "http://localhost:8000";
+
 const DashboardPage = ({ isClassScoped = false }) => {
   const { courseId } = useParams();
   const [userProfile, setUserProfile] = useState(null);
@@ -25,11 +27,17 @@ const DashboardPage = ({ isClassScoped = false }) => {
   });
   const [needsReauth, setNeedsReauth] = useState(false);
   const [flaggedPosts, setFlaggedPosts] = useState([]);
+  const [classSummary, setClassSummary] = useState({
+    upcomingSessions: [],
+    completedHours: 0,
+    completedSessions: 0,
+  });
+  const [classSummaryLoading, setClassSummaryLoading] = useState(false);
 
   const fetchProfile = useCallback(async (firebase_uid) => {
     try {
       const response = await fetch(
-        `http://localhost:8000/user/${firebase_uid}`,
+        `${API_BASE}/user/${firebase_uid}`,
       );
       if (response.ok) {
         const data = await response.json();
@@ -48,7 +56,7 @@ const DashboardPage = ({ isClassScoped = false }) => {
 
   const fetchFlaggedPosts = useCallback(async () => {
     try {
-      const res = await fetch("http://localhost:8000/posts/flagged");
+      const res = await fetch(`${API_BASE}/posts/flagged`);
       if (res.ok) {
         const data = await res.json();
         setFlaggedPosts(data);
@@ -58,10 +66,70 @@ const DashboardPage = ({ isClassScoped = false }) => {
     }
   }, []);
 
+  const fetchClassSummary = useCallback(async () => {
+    if (!isClassScoped || !courseId || !userProfile?.email) {
+      setClassSummary({
+        upcomingSessions: [],
+        completedHours: 0,
+        completedSessions: 0,
+      });
+      return;
+    }
+
+    setClassSummaryLoading(true);
+    try {
+      const params = new URLSearchParams({
+        requester_email: userProfile.email,
+      });
+      const response = await fetch(
+        `${API_BASE}/study-sessions/course/${courseId}/summary?${params.toString()}`,
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to load class dashboard summary");
+      }
+
+      const data = await response.json();
+      setClassSummary({
+        upcomingSessions: data.upcoming_sessions || [],
+        completedHours: data.completed_hours || 0,
+        completedSessions: data.completed_sessions || 0,
+      });
+    } catch (err) {
+      console.error("Error fetching class dashboard summary:", err);
+      setClassSummary({
+        upcomingSessions: [],
+        completedHours: 0,
+        completedSessions: 0,
+      });
+    } finally {
+      setClassSummaryLoading(false);
+    }
+  }, [courseId, isClassScoped, userProfile?.email]);
+
+  const formatSessionTime = (startsAt, endsAt) => {
+    const start = new Date(startsAt);
+    const end = new Date(endsAt);
+    const dayLabel = start.toLocaleDateString([], {
+      month: "short",
+      day: "numeric",
+      weekday: "short",
+    });
+    const timeLabel = `${start.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    })} - ${end.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    })}`;
+
+    return `${dayLabel} • ${timeLabel}`;
+  };
+
   const handleDismissFlag = async (postId) => {
     try {
       const res = await fetch(
-        `http://localhost:8000/posts/${postId}/dismiss-flag`,
+        `${API_BASE}/posts/${postId}/dismiss-flag`,
         {
           method: "POST",
         },
@@ -81,7 +149,7 @@ const DashboardPage = ({ isClassScoped = false }) => {
       return;
     try {
       const res = await fetch(
-        `http://localhost:8000/posts/${postId}?user_uid=${userProfile.firebase_uid}`,
+        `${API_BASE}/posts/${postId}?user_uid=${userProfile.firebase_uid}`,
         { method: "DELETE" },
       );
       if (res.ok) {
@@ -110,6 +178,10 @@ const DashboardPage = ({ isClassScoped = false }) => {
       fetchFlaggedPosts();
     }
   }, [userProfile, fetchFlaggedPosts]);
+
+  useEffect(() => {
+    fetchClassSummary();
+  }, [fetchClassSummary]);
 
   const handleUpdate = async (e) => {
     e.preventDefault();
@@ -140,7 +212,7 @@ const DashboardPage = ({ isClassScoped = false }) => {
       }
 
       const response = await fetch(
-        `http://localhost:8000/user/${user.uid}/update`,
+        `${API_BASE}/user/${user.uid}/update`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -373,15 +445,46 @@ const DashboardPage = ({ isClassScoped = false }) => {
         <div className="dashboard-grid">
           <div className="card">
             <h3>Upcoming Meetings</h3>
-            <p className="tagline-sub">
-              {isClassScoped
-                ? "Study sessions coming soon"
-                : "No meetings scheduled yet."}
-            </p>
+            {isClassScoped ? (
+              classSummaryLoading ? (
+                <p className="tagline-sub">Loading upcoming meetings...</p>
+              ) : classSummary.upcomingSessions.length > 0 ? (
+                <div className="dashboard-session-list">
+                  {classSummary.upcomingSessions.map((session) => (
+                    <div key={session.id} className="dashboard-session-item">
+                      <div className="dashboard-session-title">{session.title}</div>
+                      <div className="dashboard-session-meta">
+                        {formatSessionTime(session.starts_at, session.ends_at)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="tagline-sub">No upcoming meetings for this course yet.</p>
+              )
+            ) : (
+              <p className="tagline-sub">No meetings scheduled yet.</p>
+            )}
           </div>
           <div className="card">
             <h3>Study Stats</h3>
-            <p className="tagline-sub">Usage tracking coming soon.</p>
+            {isClassScoped ? (
+              classSummaryLoading ? (
+                <p className="tagline-sub">Loading study stats...</p>
+              ) : (
+                <div className="study-stat-block">
+                  <div className="study-stat-value">
+                    {classSummary.completedHours.toFixed(1)} hours
+                  </div>
+                  <p className="tagline-sub">
+                    Completed so far in this course across {classSummary.completedSessions} session
+                    {classSummary.completedSessions === 1 ? "" : "s"}.
+                  </p>
+                </div>
+              )
+            ) : (
+              <p className="tagline-sub">Usage tracking coming soon.</p>
+            )}
           </div>
         </div>
       </div>

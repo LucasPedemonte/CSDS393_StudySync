@@ -1008,6 +1008,63 @@ def get_course_sessions(
     ]
 
 
+@app.get("/study-sessions/course/{course_id}/summary")
+def get_course_session_summary(
+    course_id: int,
+    requester_email: str = Query(...),
+    db: Session = Depends(get_db)
+):
+    """Fetch upcoming visible study sessions and completed study hours for a course."""
+    normalized_requester_email = normalize_email(requester_email)
+    now = datetime.utcnow()
+
+    invited_session_ids = db.query(models.StudySessionInvitee.study_session_id).filter(
+        models.StudySessionInvitee.user_email == normalized_requester_email
+    )
+
+    visible_sessions = db.query(models.StudySession).filter(
+        models.StudySession.course_id == course_id,
+        or_(
+            models.StudySession.creator_email == normalized_requester_email,
+            models.StudySession.id.in_(invited_session_ids),
+        )
+    )
+
+    upcoming_sessions = visible_sessions.filter(
+        models.StudySession.starts_at >= now
+    ).order_by(models.StudySession.starts_at.asc()).all()
+
+    completed_sessions = visible_sessions.filter(
+        models.StudySession.ends_at <= now
+    ).all()
+
+    completed_minutes = 0
+    for session in completed_sessions:
+        completed_minutes += max(
+            0,
+            int((session.ends_at - session.starts_at).total_seconds() // 60)
+        )
+
+    return {
+        "upcoming_sessions": [
+            {
+                "id": s.id,
+                "title": s.title,
+                "session_type": s.session_type,
+                "starts_at": s.starts_at.isoformat(),
+                "ends_at": s.ends_at.isoformat(),
+                "group_id": s.group_id,
+                "course_id": s.course_id,
+                "creator_email": s.creator_email,
+                "invitees": [invitee.user_email for invitee in s.invitees],
+            }
+            for s in upcoming_sessions
+        ],
+        "completed_hours": round(completed_minutes / 60, 1),
+        "completed_sessions": len(completed_sessions),
+    }
+
+
 @app.post("/study-sessions")
 def create_study_session(body: StudySessionCreate, db: Session = Depends(get_db)):
     """Creates a study session."""
