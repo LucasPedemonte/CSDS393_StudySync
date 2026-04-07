@@ -20,7 +20,7 @@ class User(Base):
     full_name = Column(String)
     role = Column(String, default="Student")
     google_calendar_token = Column(String, nullable=True)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC))
     
     # Relationships
     messages = relationship("Message", back_populates="sender")
@@ -38,7 +38,7 @@ class Course(Base):
     name = Column(String, nullable=False)
     description = Column(Text, nullable=True)
     owner_id = Column(String, ForeignKey("users.firebase_uid"), nullable=False)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC))
 
     # Relationships
     owner = relationship("User", back_populates="courses_created")
@@ -54,7 +54,7 @@ class Enrollment(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(String, ForeignKey("users.firebase_uid"), nullable=False)
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
-    enrolled_at = Column(DateTime, default=datetime.datetime.utcnow)
+    enrolled_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC))
 
     user = relationship("User", back_populates="enrollments")
     course = relationship("Course", back_populates="members")
@@ -67,7 +67,7 @@ class Conversation(Base):
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=True)
     is_group = Column(Boolean, default=False)
     group_name = Column(String, nullable=True) 
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC))
     
     course = relationship("Course", back_populates="conversations")
     participants = relationship("ConversationParticipant", back_populates="conversation", cascade="all, delete-orphan")
@@ -80,7 +80,7 @@ class ConversationParticipant(Base):
     participant_id = Column(Integer, primary_key=True, index=True)
     conversation_id = Column(Integer, ForeignKey("conversations.conversation_id"), nullable=False)
     user_id = Column("user_uid", String, ForeignKey("users.firebase_uid"), nullable=False)
-    joined_at = Column(DateTime, default=datetime.datetime.utcnow)
+    joined_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC))
     
     # Relationships
     conversation = relationship("Conversation", back_populates="participants")
@@ -94,7 +94,7 @@ class Message(Base):
     conversation_id = Column(Integer, ForeignKey("conversations.conversation_id"), nullable=False)
     sender_id = Column("sender_uid", String, ForeignKey("users.firebase_uid"), nullable=False)
     content = Column(Text, nullable=False)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC))
     
     # Relationships
     conversation = relationship("Conversation", back_populates="messages")
@@ -112,7 +112,7 @@ class Post(Base):
     resource_link = Column(String, nullable=True)
     score = Column(Integer, default=0)
     is_flagged = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC))
 
     author = relationship("User", back_populates="posts")
     course = relationship("Course", back_populates="posts")
@@ -136,7 +136,7 @@ class StudyGroup(Base):
     id = Column(Integer, primary_key=True, index=True)
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
     name = Column(String, nullable=False)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC))
 
     course = relationship("Course", back_populates="study_groups")
     members = relationship("StudyGroupMember", back_populates="group", cascade="all, delete-orphan")
@@ -154,7 +154,7 @@ class StudySession(Base):
     starts_at = Column(DateTime, nullable=False)
     ends_at = Column(DateTime, nullable=False)
     group_id = Column(Integer, ForeignKey("study_groups.id"), nullable=True)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC))
 
     group = relationship("StudyGroup", back_populates="sessions")
     invitees = relationship("StudySessionInvitee", back_populates="session", cascade="all, delete-orphan")
@@ -166,7 +166,7 @@ class StudyGroupMember(Base):
     id = Column(Integer, primary_key=True, index=True)
     group_id = Column(Integer, ForeignKey("study_groups.id"), nullable=False)
     user_email = Column(String, nullable=False)
-    joined_at = Column(DateTime, default=datetime.datetime.utcnow)
+    joined_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC))
 
     group = relationship("StudyGroup", back_populates="members")
 
@@ -180,7 +180,7 @@ class UserAvailability(Base):
     ends_at = Column(DateTime, nullable=False)
     source = Column(String, default="google_calendar")
     study_session_id = Column(Integer, ForeignKey("study_sessions.id"), nullable=True)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC))
 
 
 class StudySessionInvitee(Base):
@@ -189,6 +189,6 @@ class StudySessionInvitee(Base):
     id = Column(Integer, primary_key=True, index=True)
     study_session_id = Column(Integer, ForeignKey("study_sessions.id"), nullable=False)
     user_email = Column(String, nullable=False)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC))
 
     session = relationship("StudySession", back_populates="invitees")

@@ -1,5 +1,9 @@
 import pytest
 import models
+from fastapi.testclient import TestClient
+from main import app, ensure_schema_updates
+from database import Base, engine
+from hypothesis import given, strategies as st, settings
 
 
 def _seed_test_users(db):
@@ -374,6 +378,33 @@ def test_list_users_includes_all_created_users(client, db):
     assert "sync_user_0" in firebase_uids
     assert "sync_user_1" in firebase_uids
     assert "sync_user_2" in firebase_uids
-    assert "sync_user_0" in firebase_uids
-    assert "sync_user_1" in firebase_uids
-    assert "sync_user_2" in firebase_uids
+
+
+@given(email=st.emails(), name=st.text(min_size=1, max_size=100, alphabet=st.characters(blacklist_categories=('Cc', 'Cs'))))
+@settings(max_examples=20, deadline=None)
+def test_user_sync_property_based_valid_inputs(email, name):
+    """
+    Property-based testing for user sync with various valid emails and names.
+    Verifies that the system handles diverse input data correctly.
+    """
+    import uuid
+
+    # Reset schema between Hypothesis examples for strong isolation.
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    ensure_schema_updates()
+
+    client = TestClient(app)
+    firebase_uid = str(uuid.uuid4())  # Generate unique UID for each test case
+    unique_email = f"{uuid.uuid4().hex}_{email}"
+
+    user_data = {
+        "firebase_uid": firebase_uid,
+        "email": unique_email,
+        "full_name": name,
+        "role": "Student"
+    }
+
+    response = client.post("/sync-user", json=user_data)
+    assert response.status_code == 200
+    assert response.json()["status"] == "success"
