@@ -1,3 +1,11 @@
+/**
+ * Login / sign-up page.
+ *
+ * Handles email-and-password sign-in, account creation (with a role
+ * picker for new users), Google sign-in, and password reset. After a
+ * successful auth, the new/returning user is upserted into the
+ * StudySync backend via /sync-user before navigating to /home.
+ */
 import { useState, useEffect } from "react";
 import "./LoginPage.css";
 import { useNavigate } from "react-router-dom";
@@ -42,6 +50,15 @@ const LoginPage = () => {
   };
 
   // --- SYNC FUNCTION ---
+  /**
+   * Upsert the just-authenticated Firebase user into the StudySync
+   * Postgres database via /sync-user, then navigate to /home. Falls
+   * back to displayName / "New User" if no name was provided.
+   *
+   * @param {import("firebase/auth").User} user - Firebase user object.
+   * @param {string} role - Role to record (Student / TA / Admin).
+   * @param {string|null} name - Optional display name override.
+   */
   const syncWithBackend = async (user, role, name) => {
     try {
       const response = await fetch("http://localhost:8000/sync-user", {
@@ -66,6 +83,17 @@ const LoginPage = () => {
     }
   };
 
+  /**
+   * Handle the email/password form for both sign-in and sign-up.
+   *
+   * - Sign-in path: authenticate, then sync to backend as "Student" by
+   *   default and route to /home.
+   * - Sign-up path: create the Firebase account, set displayName from
+   *   the form, then surface the role-selection step before syncing.
+   *
+   * Maps common Firebase auth error codes to friendlier messages
+   * shown via `setErrorMessage`.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage("");
@@ -127,6 +155,12 @@ const LoginPage = () => {
     }
   };
 
+  /**
+   * Sign in via the Google popup. Always routes through role
+   * selection afterward so first-time Google users still get an
+   * explicit role and a Postgres row, even though Firebase already
+   * has them.
+   */
   const handleGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
@@ -140,6 +174,7 @@ const LoginPage = () => {
     }
   };
 
+  /** Send a Firebase password-reset email to the address in the form. */
   const handleForgotPassword = async (e) => {
     e.preventDefault();
     if (!formData.email) {

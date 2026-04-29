@@ -1,3 +1,14 @@
+"""
+High-level entity map:
+
+- ``User`` — a person (student, TA, or admin).
+- ``Course`` + ``Enrollment`` — a class and its roster.
+- ``Post`` + ``PostVote`` — discussion/resource posts and their votes.
+- ``StudyGroup`` + ``StudyGroupMember`` — long-lived groups inside a course.
+- ``StudySession`` + ``StudySessionInvitee`` — scheduled meetings (solo or group).
+- ``UserAvailability`` — busy/free blocks, typically synced from Google Calendar.
+- ``Conversation`` + ``ConversationParticipant`` + ``Message`` — chat.
+"""
 from database import Base
 from sqlalchemy import Column, Integer, String, DateTime, Enum, ForeignKey, Text, Boolean
 from sqlalchemy.orm import relationship
@@ -6,12 +17,19 @@ import enum
 
 
 class UserRole(str, enum.Enum):
+    """Allowed values for ``User.role``. Stored as a plain string column."""
     STUDENT = "Student"
     TA = "TA"
     ADMIN = "Admin"
 
 
 class User(Base):
+    """A StudySync user, keyed by their Firebase Auth UID.
+
+    Holds profile basics plus an optional Google Calendar token used by
+    the calendar-sync feature. All ownership/authorship foreign keys in
+    other tables point at ``firebase_uid``.
+    """
     __tablename__ = "users"
 
     # Firebase UID is now the primary key (string)
@@ -31,6 +49,7 @@ class User(Base):
 
 
 class Course(Base):
+    """A class/course that students can enroll in and post to."""
     __tablename__ = "courses"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -49,6 +68,7 @@ class Course(Base):
 
 
 class Enrollment(Base):
+    """Join table linking a ``User`` to a ``Course`` they are enrolled in."""
     __tablename__ = "enrollments"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -61,6 +81,11 @@ class Enrollment(Base):
 
 
 class Conversation(Base):
+    """A chat thread, either 1:1 (``is_group`` False) or a named group chat.
+
+    Optionally scoped to a course via ``course_id`` so course-specific
+    chats can be filtered out of personal DMs.
+    """
     __tablename__ = "conversations"
     
     conversation_id = Column(Integer, primary_key=True, index=True)
@@ -75,6 +100,7 @@ class Conversation(Base):
 
 
 class ConversationParticipant(Base):
+    """Membership of a user in a conversation; controls who can read/send."""
     __tablename__ = "conversation_participants"
     
     participant_id = Column(Integer, primary_key=True, index=True)
@@ -88,6 +114,7 @@ class ConversationParticipant(Base):
 
 
 class Message(Base):
+    """A single chat message inside a ``Conversation``."""
     __tablename__ = "messages"
     
     message_id = Column("id", Integer, primary_key=True, index=True)
@@ -102,6 +129,12 @@ class Message(Base):
 
 
 class Post(Base):
+    """A discussion or resource post within a course.
+
+    ``score`` is a denormalized vote tally maintained alongside
+    ``PostVote`` rows. ``is_flagged`` lets moderators hide a post
+    without deleting it.
+    """
     __tablename__ = "posts"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -120,6 +153,7 @@ class Post(Base):
 
 
 class PostVote(Base):
+    """One user's upvote (+1) or downvote (-1) on a ``Post``."""
     __tablename__ = "post_votes"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -131,6 +165,11 @@ class PostVote(Base):
 
 
 class StudyGroup(Base):
+    """A persistent study group inside a course.
+
+    Holds the long-lived membership (``StudyGroupMember``) and any
+    scheduled meetings (``StudySession``).
+    """
     __tablename__ = "study_groups"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -144,6 +183,12 @@ class StudyGroup(Base):
 
 
 class StudySession(Base):
+    """A scheduled study meeting.
+
+    ``session_type`` is ``"solo"`` for personal study blocks or
+    ``"group"`` when tied to a ``StudyGroup`` via ``group_id``.
+    Invitees (for group sessions) live in ``StudySessionInvitee``.
+    """
     __tablename__ = "study_sessions"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -161,6 +206,7 @@ class StudySession(Base):
 
 
 class StudyGroupMember(Base):
+    """A user's membership in a ``StudyGroup``, keyed by email."""
     __tablename__ = "study_group_members"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -172,6 +218,13 @@ class StudyGroupMember(Base):
 
 
 class UserAvailability(Base):
+    """A busy/free time block for a user.
+
+    Most rows are imported from Google Calendar (``source =
+    "google_calendar"``); rows tied to a StudySession reflect blocks
+    StudySync itself created. Used by the scheduler to find overlap
+    when proposing meeting times.
+    """
     __tablename__ = "user_availability"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -184,6 +237,7 @@ class UserAvailability(Base):
 
 
 class StudySessionInvitee(Base):
+    """An email invited to a ``StudySession``; the invitee may not yet be a registered user."""
     __tablename__ = "study_session_invitees"
 
     id = Column(Integer, primary_key=True, index=True)

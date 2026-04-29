@@ -1,3 +1,11 @@
+/**
+ * Lets students browse and create solo or group study sessions for the
+ * current course, sync availability from Google Calendar via Google
+ * Identity Services, and view a weekly calendar grid. Helper utilities
+ * at the top of the file (`loadGoogleScript`, `getWeekRange`,
+ * `formatHourLabel`, …) are used throughout the component to keep the
+ * render logic readable.
+ */
 import "./SchedulePage.css";
 import { useEffect, useState, useCallback } from "react";
 import { auth } from "./firebase";
@@ -6,6 +14,14 @@ import { useParams } from "react-router-dom";
 const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://127.0.0.1:8000";
 const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
+/**
+ * Lazily inject the Google Identity Services script and resolve once
+ * `window.google.accounts.oauth2` is available. Reuses the existing
+ * <script> tag if one was added earlier so the script only loads once
+ * per page.
+ *
+ * @returns {Promise<void>}
+ */
 const loadGoogleScript = () =>
   new Promise((resolve, reject) => {
     if (window.google?.accounts?.oauth2) {
@@ -30,6 +46,13 @@ const loadGoogleScript = () =>
     document.body.appendChild(script);
   });
 
+/**
+ * Return the [Sunday, next Sunday) range covering the week that
+ * contains `date`, with the start aligned to local midnight.
+ *
+ * @param {Date} date - Any date in the target week.
+ * @returns {{ start: Date, end: Date }} Half-open week boundaries.
+ */
 const getWeekRange = (date) => {
   const start = new Date(date);
   start.setHours(0, 0, 0, 0);
@@ -41,14 +64,20 @@ const getWeekRange = (date) => {
   return { start, end };
 };
 
+/** Format an hour-of-day (0–23) as a localized "h:mm AM/PM" label. */
 const formatHourLabel = (hour) =>
   new Date(2000, 0, 1, hour).toLocaleTimeString([], {
     hour: "numeric",
     minute: "2-digit",
   });
 
+/** Normalize a free-text query for case-insensitive substring matching. */
 const normalizeSearchValue = (value) => value.trim().toLowerCase();
 
+/**
+ * Format a Date as the value an `<input type="datetime-local">` expects
+ * (`YYYY-MM-DDTHH:MM` in local time). Used to pre-fill the meeting form.
+ */
 const toLocalDateTimeInputValue = (date) => {
   const year = date.getFullYear();
   const month = `${date.getMonth() + 1}`.padStart(2, "0");
@@ -87,6 +116,7 @@ const SchedulePage = () => {
     courseId: courseId || "",
   });
 
+  /** Clear the meeting form fields, classmate selection, and edit state. */
   const resetMeetingForm = useCallback(() => {
     setMeetingForm({
       title: "",
@@ -99,6 +129,14 @@ const SchedulePage = () => {
     setEditingSession(null);
   }, [courseId]);
 
+  /**
+   * Request a Google OAuth access token with the calendar.readonly scope.
+   * Pass `prompt="consent"` on the first connection to force the picker;
+   * pass `""` for silent refresh on subsequent calls.
+   *
+   * @param {string} [prompt] - Google Identity Services prompt mode.
+   * @returns {Promise<string>} Access token usable against the Calendar API.
+   */
   const getGoogleAccessToken = useCallback(async (prompt = "") => {
     if (!GOOGLE_CLIENT_ID) {
       throw new Error("Missing REACT_APP_GOOGLE_CLIENT_ID in frontend env");
@@ -123,6 +161,12 @@ const SchedulePage = () => {
     });
   }, []);
 
+  /**
+   * Load busy blocks for the given emails over the currently displayed
+   * week and store them in `availabilityByEmail` for the calendar grid.
+   *
+   * @param {string[]} emails - Emails whose availability should be fetched.
+   */
   const fetchAvailability = useCallback(async (emails) => {
     if (!userEmail || emails.length === 0) {
       setAvailabilityByEmail({});
@@ -151,6 +195,13 @@ const SchedulePage = () => {
     }
   }, [currentWeek, userEmail]);
 
+  /**
+   * Pull busy times from the user's Google Calendar via freeBusy and
+   * push them to the StudySync backend. Refreshes availability for the
+   * currently displayed week on success.
+   *
+   * @param {string} [prompt] - "consent" on first connect, "" for refresh.
+   */
   const syncGoogleCalendar = useCallback(async (prompt = "") => {
     if (!userEmail) return;
 
@@ -214,6 +265,7 @@ const SchedulePage = () => {
     }
   }, [currentWeek, fetchAvailability, getGoogleAccessToken, selectedClassmates, userEmail]);
 
+  /** Ask the backend whether this user has a stored Google Calendar token. */
   const checkGcalConnection = useCallback(async () => {
     if (!userEmail) return;
 
@@ -231,6 +283,12 @@ const SchedulePage = () => {
     }
   }, [userEmail]);
 
+  /**
+   * Load the user's enrolled courses and the roster of classmates to
+   * compare schedules with. In class-scoped mode the list is restricted
+   * to members of the active course; otherwise every StudySync user is
+   * available as a potential study partner.
+   */
   const fetchClassmates = useCallback(async () => {
     if (!user?.uid) return;
 
@@ -267,6 +325,11 @@ const SchedulePage = () => {
     }
   }, [courseId, isClassScoped, user?.uid, userEmail]);
 
+  /**
+   * Load the next 14 days of study sessions for the active class so
+   * the upcoming-sessions sidebar stays in sync. No-op outside
+   * class-scoped mode.
+   */
   const fetchUpcomingSessions = useCallback(async () => {
     if (!isClassScoped || !courseId || !userEmail) {
       setUpcomingSessions([]);
@@ -295,6 +358,12 @@ const SchedulePage = () => {
     }
   }, [courseId, isClassScoped, userEmail]);
 
+  /**
+   * Submit the meeting form: POST a new study session, or PUT an update
+   * if `editingSession` is set. The session is "group" when classmates
+   * are selected and "solo" otherwise. Refreshes upcoming sessions and
+   * availability so the calendar reflects the new block.
+   */
   const handleScheduleMeeting = async () => {
     if (!meetingForm.title || !meetingForm.startTime || !meetingForm.endTime || !meetingForm.courseId) {
       setStatus("Please fill in all required fields");
@@ -347,6 +416,11 @@ const SchedulePage = () => {
     }
   };
 
+  /**
+   * Pre-fill the meeting form with an existing session and open the
+   * modal in edit mode. Only the session's creator can edit; other
+   * users get a no-op.
+   */
   const openEditMeetingModal = useCallback((session) => {
     if (session.creator_email !== userEmail) {
       return;
@@ -364,22 +438,28 @@ const SchedulePage = () => {
     setShowScheduleMeetingModal(true);
   }, [userEmail]);
 
+  // Initial load: GCal status, classmate roster, upcoming class sessions.
   useEffect(() => {
     checkGcalConnection();
     fetchClassmates();
     fetchUpcomingSessions();
   }, [checkGcalConnection, fetchClassmates, fetchUpcomingSessions]);
 
+  // Re-fetch availability whenever the user changes week or selects a
+  // different classmate to compare against.
   useEffect(() => {
     if (!userEmail) return;
     fetchAvailability([userEmail, ...selectedClassmates]);
   }, [currentWeek, fetchAvailability, selectedClassmates, userEmail]);
 
+  // Drop any selected classmates that disappear from the roster (e.g.
+  // when switching from global to class-scoped view).
   useEffect(() => {
     const validEmails = new Set(classmates.map((classmate) => classmate.email));
     setSelectedClassmates((current) => current.filter((email) => validEmails.has(email)));
   }, [classmates]);
 
+  /** Return the seven Date objects that make up the currently displayed week. */
   const getWeekDates = () => {
     const { start } = getWeekRange(currentWeek);
     return Array.from({ length: 7 }, (_, index) => {
@@ -391,6 +471,10 @@ const SchedulePage = () => {
 
   const getBusyBlocks = (email) => availabilityByEmail[email] || [];
 
+  /**
+   * True if any of the given users has a busy block overlapping the
+   * one-hour slot starting at `hour` on `date`.
+   */
   const isBusyForEmails = (emails, date, hour) => {
     const slotStart = new Date(date);
     slotStart.setHours(hour, 0, 0, 0);
@@ -406,6 +490,12 @@ const SchedulePage = () => {
     );
   };
 
+  /**
+   * Render the 7-day × 14-hour calendar grid (8am–9pm), shading each
+   * cell free or busy based on `emailsToCheck`. In Compare view,
+   * clicking a free slot pre-fills the meeting form and opens the
+   * scheduling modal.
+   */
   const renderAvailabilityGrid = (emailsToCheck) => {
     const weekDates = getWeekDates();
     const hours = Array.from({ length: 14 }, (_, i) => i + 8);

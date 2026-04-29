@@ -1,3 +1,9 @@
+"""Local seed script: insert a handful of fake users for development.
+
+Run once after pointing the backend at a fresh database (``python
+create_fake_users.py``). Idempotent — users with an existing email are
+skipped rather than duplicated. Not used in production.
+"""
 from database import SessionLocal, engine, Base
 from models import User
 import uuid

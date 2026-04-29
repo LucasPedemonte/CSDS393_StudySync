@@ -1,3 +1,10 @@
+/**
+ * Class-scoped header shown above ClassLayout pages.
+ *
+ * Reads the `:courseId` URL param, fetches the user's enrolled courses
+ * to populate a class-switcher dropdown, and renders the secondary tab
+ * bar (Summary / Library / Chat / Study Sessions) for the current class.
+ */
 import { useState, useEffect } from "react";
 import { NavLink, useParams, useNavigate } from "react-router-dom";
 import { auth } from "./firebase";

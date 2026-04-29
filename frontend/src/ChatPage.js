@@ -1,3 +1,10 @@
+/**
+ * - Global inbox (`isGlobal=true`, mounted at /inbox): every
+ *   conversation the current user belongs to, across courses and DMs.
+ * - Class chat (`isGlobal=false`, mounted at /class/:courseId/chat):
+ *   the auto-provisioned course-wide group chat plus 1:1 DMs with
+ *   classmates.
+ */
 import { useEffect, useState, useCallback} from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { useParams } from "react-router-dom";
@@ -82,6 +89,13 @@ const ChatPage = ({ isGlobal = true }) => {
     return () => unsubscribe();
   }, [isGlobal, courseId]);
 
+  /**
+   * Fetch the message history for the conversation between
+   * `currentUser` and `otherUser` (or the course group chat if
+   * `otherUser.is_group`). Course context comes from the conversation
+   * itself when in the global inbox, falling back to the URL
+   * `:courseId` on the class page.
+   */
   const loadMessages = useCallback(async (currentUser, otherUser) => {
     if (!currentUser || !otherUser) return;
     try {
@@ -118,7 +132,13 @@ const ChatPage = ({ isGlobal = true }) => {
     return () => clearInterval(interval);
   }, [authUser, selectedUser, loadMessages]);
 
-  // 2. Use conversation-specific course IDs
+  /**
+   * Send the current draft message to the selected conversation.
+   * Uses the conversation's own course id when present (so global
+   * inbox replies stay in the right course thread); falls back to
+   * the URL `:courseId` for class-page sends. For group chats the
+   * receiver UID is the sentinel `"GROUP"`.
+   */
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!authUser || !selectedUser || !newMessage.trim()) return;

@@ -1,3 +1,14 @@
+/**
+ * Top-level router for StudySync.
+ *
+ * Routes split into two layout groups behind a ProtectedRoute auth guard:
+ *  - GlobalLayout: Navbar only (Home, personal Dashboard, global Inbox).
+ *  - ClassLayout: Navbar + ClassHeader tabs (Summary, Resources, Chat,
+ *    Schedule), all scoped to a `:courseId` URL param.
+ *
+ * The login page at "/" is the only unauthenticated route; anything
+ * unmatched redirects to "/home".
+ */
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import LoginPage from "./LoginPage";
 import HomePage from "./HomePage";
