@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: HomePage.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: HomePage.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Home page (post-login landing) — shows the user's enrolled classes
+ * and lets them join an existing course by code or, for TA/Admin
+ * users, create a new course. Each course tile links into the
+ * class-scoped routes under `/class/:courseId/...`.
+ *
+ * @module HomePage
+ */
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { auth } from "./firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import "./HomePage.css";
+
+const HomePage = () => {
+  const [courses, setCourses] = useState([]);
+  const [userProfile, setUserProfile] = useState(null);
+  const [showJoinModal, setShowJoinModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [courseCode, setCourseCode] = useState("");
+  const [newCourseName, setNewCourseName] = useState("");
+  const [newCourseCode, setNewCourseCode] = useState("");
+  const navigate = useNavigate();
+
+  // Fetch user profile to check for TA/Admin roles
+  const fetchProfile = useCallback(async (firebase_uid) => {
+    try {
+      const response = await fetch(`http://localhost:8000/user/${firebase_uid}`);
+      if (response.ok) {
+        const data = await response.json();
+        setUserProfile(data);
+      }
+    } catch (err) {
+      console.error("Error fetching profile:", err);
+    }
+  }, []);
+
+  const fetchUserCourses = useCallback(async (firebase_uid) => {
+    if (!firebase_uid) return;
+    try {
+      const res = await axios.get(
+        `http://localhost:8000/users/${firebase_uid}/courses`
+      );
+      setCourses(res.data);
+    } catch (err) {
+      console.error("Error fetching courses", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        fetchProfile(user.uid);
+        fetchUserCourses(user.uid);
+      }
+    });
+    return () => unsubscribe();
+  }, [fetchUserCourses, fetchProfile]);
+
+  /**
+   * Submit the join-course modal: enroll the current user in the
+   * course identified by `courseCode`. On success, close the modal
+   * and refresh the user's course list. Failure is surfaced via
+   * alert (typical case: bad code or already enrolled).
+   */
+  const handleJoinCourse = async (e) => {
+    e.preventDefault();
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+      await axios.post(
+        `http://localhost:8000/courses/join?course_code=${courseCode}&amp;firebase_uid=${user.uid}`
+      );
+      setCourseCode("");
+      setShowJoinModal(false);
+      fetchUserCourses(user.uid);
+    } catch (err) {
+      alert("Invalid course code or already enrolled.");
+    }
+  };
+
+  /**
+   * Submit the create-course modal (TA/Admin only). Owner is the
+   * current Firebase UID. Surfaces the backend's `detail` message on
+   * failure (e.g. duplicate course code).
+   */
+  const handleCreateCourse = async (e) => {
+    e.preventDefault();
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+      await axios.post("http://localhost:8000/courses", {
+        name: newCourseName,
+        course_code: newCourseCode,
+        owner_id: user.uid, // Use Firebase UID
+      });
+      setNewCourseName("");
+      setNewCourseCode("");
+      setShowCreateModal(false);
+      fetchUserCourses(user.uid);
+    } catch (err) {
+      const errorMessage =
+        err.response?.data?.detail || "Failed to create course.";
+      alert(errorMessage);
+      console.error("Course creation error:", err.response?.data);
+    }
+  };
+
+  return (
+    &lt;div className="home-content">
+      &lt;header className="page-header">
+        &lt;h1 className="page-title">My Classes&lt;/h1>
+        &lt;div style={{ display: "flex", gap: "12px" }}>
+          &lt;button
+            className="btn-primary"
+            onClick={() => setShowJoinModal(true)}
+          >
+            + Join Class
+          &lt;/button>
+
+          {(userProfile?.role === "TA" || userProfile?.role === "Admin") &amp;&amp; (
+            &lt;button
+              className="btn-subtle"
+              onClick={() => setShowCreateModal(true)}
+            >
+              + Create Class
+            &lt;/button>
+          )}
+        &lt;/div>
+      &lt;/header>
+
+      &lt;div className="home-grid">
+        {courses.map((course) => (
+          &lt;div
+            key={course.id}
+            className="home-card"
+            onClick={() => navigate(`/class/${course.id}/summary`)}
+          >
+            &lt;div className="home-card-icon">{course.course_code[0]}&lt;/div>
+            &lt;h3 className="home-card-title">{course.name}&lt;/h3>
+            &lt;p className="home-card-description">{course.course_code}&lt;/p>
+          &lt;/div>
+        ))}
+
+        {courses.length === 0 &amp;&amp; (
+          &lt;div className="no-classes">
+            &lt;p>
+              You haven't joined any classes yet. Use a code to get started!
+            &lt;/p>
+          &lt;/div>
+        )}
+      &lt;/div>
+
+      {/* Join Class Modal */}
+      {showJoinModal &amp;&amp; (
+        &lt;div className="modal-overlay">
+          &lt;div className="modal-card">
+            &lt;h2 className="brand-name">Join a New Class&lt;/h2>
+            &lt;p className="tagline-sub">Enter your class code below&lt;/p>
+            &lt;form onSubmit={handleJoinCourse}>
+              &lt;div className="field">
+                &lt;input
+                  type="text"
+                  placeholder="Enter Course Code (e.g. CSDS393)"
+                  value={courseCode}
+                  onChange={(e) => setCourseCode(e.target.value)}
+                  required
+                />
+              &lt;/div>
+              &lt;div className="modal-actions">
+                &lt;button
+                  type="button"
+                  className="btn-subtle"
+                  onClick={() => setShowJoinModal(false)}
+                >
+                  Cancel
+                &lt;/button>
+                &lt;button type="submit" className="btn-primary">
+                  Join
+                &lt;/button>
+              &lt;/div>
+            &lt;/form>
+          &lt;/div>
+        &lt;/div>
+      )}
+
+      {/* Create Class Modal */}
+      {showCreateModal &amp;&amp; (
+        &lt;div className="modal-overlay">
+          &lt;div className="modal-card">
+            &lt;h2 className="brand-name">Create Workspace&lt;/h2>
+            &lt;p className="tagline-sub">Set up a new class environment&lt;/p>
+            &lt;form onSubmit={handleCreateCourse}>
+              &lt;div className="field">
+                &lt;label>Course Name&lt;/label>
+                &lt;input
+                  type="text"
+                  placeholder="e.g. Data Science"
+                  value={newCourseName}
+                  onChange={(e) => setNewCourseName(e.target.value)}
+                  required
+                />
+              &lt;/div>
+              &lt;div className="field">
+                &lt;label>Course Code&lt;/label>
+                &lt;input
+                  type="text"
+                  placeholder="e.g. CSDS393"
+                  value={newCourseCode}
+                  onChange={(e) => setNewCourseCode(e.target.value)}
+                  required
+                />
+              &lt;/div>
+              &lt;div className="modal-actions">
+                &lt;button
+                  type="button"
+                  className="btn-subtle"
+                  onClick={() => setShowCreateModal(false)}
+                >
+                  Cancel
+                &lt;/button>
+                &lt;button type="submit" className="btn-primary">
+                  Create
+                &lt;/button>
+              &lt;/div>
+            &lt;/form>
+          &lt;/div>
+        &lt;/div>
+      )}
+    &lt;/div>
+  );
+};
+
+export default HomePage;</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-App.html">App</a></li><li><a href="module-CalendarPage.html">CalendarPage</a></li><li><a href="module-ChatPage.html">ChatPage</a></li><li><a href="module-ClassHeader.html">ClassHeader</a></li><li><a href="module-DashboardPage.html">DashboardPage</a></li><li><a href="module-HomePage.html">HomePage</a></li><li><a href="module-LoginPage.html">LoginPage</a></li><li><a href="module-Navbar.html">Navbar</a></li><li><a href="module-ProtectedRoute.html">ProtectedRoute</a></li><li><a href="module-ResourcesPage.html">ResourcesPage</a></li><li><a href="module-SchedulePage.html">SchedulePage</a></li><li><a href="module-firebase.html">firebase</a></li><li><a href="module-index.html">index</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Wed Apr 29 2026 18:41:17 GMT-0400 (Eastern Daylight Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

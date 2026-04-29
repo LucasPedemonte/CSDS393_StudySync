@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: ChatPage.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: ChatPage.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Chat page used in two modes selected by the `isGlobal` prop:
+ *
+ * - Global inbox (`isGlobal=true`, mounted at /inbox): every
+ *   conversation the current user belongs to, across courses and DMs.
+ * - Class chat (`isGlobal=false`, mounted at /class/:courseId/chat):
+ *   the auto-provisioned course-wide group chat plus 1:1 DMs with
+ *   classmates.
+ *
+ * @module ChatPage
+ */
+import { useEffect, useState, useCallback} from "react";
+import { onAuthStateChanged } from "firebase/auth";
+import { useParams } from "react-router-dom";
+import "./LoginPage.css";
+import "./ChatPage.css";
+import { auth } from "./firebase";
+
+const ROLE_PRIORITY = {
+  Admin: 0,
+  TA: 1,
+  Student: 2,
+};
+
+const ChatPage = ({ isGlobal = true }) => {
+  const { courseId } = useParams();
+  const [authUser, setAuthUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [sending, setSending] = useState(false);
+
+  // Load current user + profile
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setAuthUser(user);
+        try {
+          // 1. Load User Profile
+          const profileRes = await fetch(
+            `http://localhost:8000/user/${user.uid}`,
+          );
+          if (profileRes.ok) {
+            const profileData = await profileRes.json();
+            setUserProfile(profileData);
+          }
+
+          // 2. Logic Switch: Global Inbox vs. Class Roster
+          if (isGlobal) {
+            // GLOBAL VIEW: Fetch only active conversations from across all classes
+            const inboxRes = await fetch(
+              `http://localhost:8000/conversations/inbox/global?user_uid=${user.uid}`,
+            );
+            if (inboxRes.ok) {
+              const activeConversations = await inboxRes.json();
+              setUsers(activeConversations);
+              if (activeConversations.length > 0)
+                setSelectedUser(activeConversations[0]);
+            }
+          } else {
+            // CLASS VIEW: Fetch all students/TAs in the system so you can start new chats
+            const usersRes = await fetch("http://localhost:8000/users");
+            if (usersRes.ok) {
+              const allUsers = await usersRes.json();
+              // Filter out yourself
+              let filtered = allUsers.filter(
+                (u) => u.firebase_uid !== user.uid,
+              );
+
+              // Create the Class Chat sentinel for this specific course
+              const classChatEntry = {
+                firebase_uid: `GROUP_${courseId}`, // Unique ID for this course group
+                full_name: "Class Discussion",
+                role: "Public Channel",
+                is_group: true,
+                course_id: courseId,
+              };
+
+              setUsers([classChatEntry, ...filtered]);
+              setSelectedUser(classChatEntry); // Default to the class group chat
+            }
+          }
+        } catch (err) {
+          console.error("Error loading chat roster:", err);
+        }
+      }
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, [isGlobal, courseId]);
+
+  /**
+   * Fetch the message history for the conversation between
+   * `currentUser` and `otherUser` (or the course group chat if
+   * `otherUser.is_group`). Course context comes from the conversation
+   * itself when in the global inbox, falling back to the URL
+   * `:courseId` on the class page.
+   */
+  const loadMessages = useCallback(async (currentUser, otherUser) => {
+    if (!currentUser || !otherUser) return;
+    try {
+      const params = new URLSearchParams();
+      params.append("user1", currentUser.uid);
+      params.append("user2", otherUser.firebase_uid);
+      params.append("is_group", otherUser.is_group || false);
+
+      // Use the course ID from the user object (Global) OR the URL (Class Page)
+      const activeCourseId = otherUser.course_id || courseId;
+      if (activeCourseId) {
+        params.append("course_id", activeCourseId);
+      }
+
+      const res = await fetch(
+        `http://localhost:8000/messages?${params.toString()}`,
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setMessages(data);
+      }
+    } catch (err) {
+      console.error("Error loading messages:", err);
+    }
+  }, [courseId]);
+
+  // Initial + polling load of messages when selectedUser changes
+  useEffect(() => {
+    if (!authUser || !selectedUser) return;
+    loadMessages(authUser, selectedUser);
+    const interval = setInterval(() => {
+      loadMessages(authUser, selectedUser);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [authUser, selectedUser, loadMessages]);
+
+  /**
+   * Send the current draft message to the selected conversation.
+   * Uses the conversation's own course id when present (so global
+   * inbox replies stay in the right course thread); falls back to
+   * the URL `:courseId` for class-page sends. For group chats the
+   * receiver UID is the sentinel `"GROUP"`.
+   */
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!authUser || !selectedUser || !newMessage.trim()) return;
+
+    setSending(true);
+    try {
+      // Determine correct course context for the message
+      const targetCourseId = selectedUser.course_id || courseId;
+
+      const payload = {
+        sender_uid: authUser.uid,
+        content: newMessage.trim(),
+        course_id: parseInt(targetCourseId || 0),
+        receiver_uid: selectedUser.is_group
+          ? "GROUP"
+          : selectedUser.firebase_uid,
+        is_group: selectedUser.is_group || false,
+      };
+
+      const res = await fetch("http://localhost:8000/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        setNewMessage("");
+        loadMessages(authUser, selectedUser);
+      }
+    } catch (err) {
+      console.error("Error sending message:", err);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      &lt;div className="page with-navbar">
+        &lt;div className="dm-page">
+          &lt;div className="dm-shell">
+            &lt;div className="dm-sidebar">
+              &lt;div className="dm-brand">
+                &lt;h1 className="tagline">
+                  Discussion &lt;span className="highlight">Forum&lt;/span>
+                &lt;/h1>
+                &lt;p className="tagline-sub">Loading chat...&lt;/p>
+              &lt;/div>
+            &lt;/div>
+            &lt;div className="dm-main">
+              &lt;div className="dm-main-empty">Loading…&lt;/div>
+            &lt;/div>
+          &lt;/div>
+        &lt;/div>
+      &lt;/div>
+    );
+  }
+
+  return (
+    &lt;div className="page with-navbar">
+      &lt;div className="dm-page">
+        &lt;div className="dm-shell">
+          &lt;aside className="dm-sidebar">
+            &lt;div className="dm-sidebar-header">
+              &lt;h2 className="dm-sidebar-title">Messages&lt;/h2>
+              {userProfile &amp;&amp; (
+                &lt;p className="dm-sidebar-sub">
+                  {userProfile.full_name} · {userProfile.role}
+                &lt;/p>
+              )}
+            &lt;/div>
+
+            &lt;div className="dm-list-label">Active Conversations&lt;/div>
+            &lt;div className="dm-user-list">
+              {users.length === 0 &amp;&amp; (
+                &lt;p className="dm-empty-text">No active chats in this view.&lt;/p>
+              )}
+              {users.map((u) => {
+                const isActive = selectedUser?.firebase_uid === u.firebase_uid;
+                return (
+                  &lt;button
+                    key={u.firebase_uid}
+                    type="button"
+                    className={`dm-user-row ${isActive ? "active" : ""}`}
+                    onClick={() => setSelectedUser(u)}
+                  >
+                    &lt;div className="dm-avatar">
+                      {u.full_name?.charAt(0).toUpperCase() || "U"}
+                    &lt;/div>
+                    &lt;div className="dm-user-meta">
+                      {/* Name will now include (Course Code) from the backend */}
+                      &lt;div className="dm-user-name">{u.full_name}&lt;/div>
+                      &lt;div className="dm-user-role">
+                        {u.role} {u.course_code ? `· ${u.course_code}` : ""}
+                      &lt;/div>
+                    &lt;/div>
+                  &lt;/button>
+                );
+              })}
+            &lt;/div>
+          &lt;/aside>
+
+          &lt;section className="dm-main">
+            &lt;header className="dm-main-header">
+              {selectedUser &amp;&amp; (
+                &lt;div className="dm-main-user">
+                  &lt;div className="dm-main-name">{selectedUser.full_name}&lt;/div>
+                  &lt;div className="dm-main-role">
+                    {selectedUser.role}{" "}
+                    {selectedUser.course_code
+                      ? `· ${selectedUser.course_code}`
+                      : ""}
+                  &lt;/div>
+                &lt;/div>
+              )}
+            &lt;/header>
+
+            &lt;div className="dm-messages">
+              {messages.map((m) => {
+                const isMe = m.sender_uid === authUser?.uid;
+                return (
+                  &lt;div
+                    key={m.id}
+                    className={`dm-message-row ${isMe ? "me" : "them"}`}
+                  >
+                    {!isMe &amp;&amp; selectedUser?.is_group &amp;&amp; (
+                      &lt;span className="dm-sender-label">{m.sender_name}&lt;/span>
+                    )}
+                    &lt;div className="dm-bubble">{m.content}&lt;/div>
+                  &lt;/div>
+                );
+              })}
+            &lt;/div>
+
+            &lt;form className="dm-input-bar" onSubmit={handleSendMessage}>
+              &lt;input
+                type="text"
+                placeholder="Message..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                disabled={!selectedUser || sending}
+              />
+              &lt;button
+                type="submit"
+                className="btn-submit chat-send-btn"
+                disabled={!newMessage.trim()}
+              >
+                Send
+              &lt;/button>
+            &lt;/form>
+          &lt;/section>
+        &lt;/div>
+      &lt;/div>
+    &lt;/div>
+  );
+};
+
+export default ChatPage;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-App.html">App</a></li><li><a href="module-CalendarPage.html">CalendarPage</a></li><li><a href="module-ChatPage.html">ChatPage</a></li><li><a href="module-ClassHeader.html">ClassHeader</a></li><li><a href="module-DashboardPage.html">DashboardPage</a></li><li><a href="module-HomePage.html">HomePage</a></li><li><a href="module-LoginPage.html">LoginPage</a></li><li><a href="module-Navbar.html">Navbar</a></li><li><a href="module-ProtectedRoute.html">ProtectedRoute</a></li><li><a href="module-ResourcesPage.html">ResourcesPage</a></li><li><a href="module-SchedulePage.html">SchedulePage</a></li><li><a href="module-firebase.html">firebase</a></li><li><a href="module-index.html">index</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Wed Apr 29 2026 18:41:17 GMT-0400 (Eastern Daylight Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
