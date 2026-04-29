@@ -5,6 +5,8 @@
  * create or join study groups, request meeting-time suggestions based
  * on group availability, and create solo or group study sessions on a
  * monthly calendar grid.
+ *
+ * @module CalendarPage
  */
 import "./LoginPage.css";
 import "./CalendarPage.css";

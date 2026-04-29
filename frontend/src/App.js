@@ -8,6 +8,8 @@
  *
  * The login page at "/" is the only unauthenticated route; anything
  * unmatched redirects to "/home".
+ *
+ * @module App
  */
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import LoginPage from "./LoginPage";

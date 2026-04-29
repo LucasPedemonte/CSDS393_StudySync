@@ -1,7 +1,14 @@
+"""Tests for messaging-data integrity.
+
+Verifies that the messaging endpoints reject malformed input (e.g.
+empty/whitespace-only message bodies) before persisting anything,
+which keeps the conversation tables free of garbage rows.
+"""
 import pytest
 
 
 def _seed_users_course_enrollments(db):
+    """Create a TA, two students, a course, and enroll both students in it."""
     import models
 
     ta = models.User(
@@ -45,6 +52,7 @@ def _seed_users_course_enrollments(db):
 
 
 def test_send_message_rejects_empty_content(client, db):
+    """POST /messages with whitespace-only content must return 400, not persist."""
     seeded = _seed_users_course_enrollments(db)
     course_id = seeded["course"].id
 

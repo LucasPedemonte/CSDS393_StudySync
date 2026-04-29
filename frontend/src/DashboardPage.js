@@ -1,10 +1,14 @@
 /**
+ * Dashboard page used in two modes selected by the `isClassScoped` prop:
+ *
  * - Personal (`isClassScoped=false`, mounted at /dashboard): profile
  *   editing (name, email, password re-auth) plus, for TA/Admin users,
  *   a moderation queue of flagged posts.
  * - Class summary (`isClassScoped=true`, mounted at
  *   /class/:courseId/summary): upcoming sessions and aggregate study
  *   stats for the active course.
+ *
+ * @module DashboardPage
  */
 import { useState, useEffect, useCallback } from "react";
 import { auth } from "./firebase";

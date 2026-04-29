@@ -2,6 +2,8 @@
  * Auth-guard wrapper for routes that require a signed-in Firebase user.
  * Renders nothing while the auth state is resolving, redirects to "/"
  * if the user is signed out, and otherwise renders its children.
+ *
+ * @module ProtectedRoute
  */
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";

@@ -4,6 +4,8 @@
  * Reads the `:courseId` URL param, fetches the user's enrolled courses
  * to populate a class-switcher dropdown, and renders the secondary tab
  * bar (Summary / Library / Chat / Study Sessions) for the current class.
+ *
+ * @module ClassHeader
  */
 import { useState, useEffect } from "react";
 import { NavLink, useParams, useNavigate } from "react-router-dom";

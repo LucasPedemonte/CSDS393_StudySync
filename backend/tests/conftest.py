@@ -1,3 +1,16 @@
+"""Shared pytest fixtures for the StudySync backend test suite.
+
+Provides:
+
+- ``_guard_test_db`` (session-scoped): refuses to run if ``DATABASE_URL``
+  doesn't point at a database whose name contains ``test``, so the
+  destructive ``db`` fixture can never wipe a developer's real data.
+  Override with ``ALLOW_DB_RESET_FOR_TESTS=1`` only if you know what
+  you're doing.
+- ``client``: a FastAPI ``TestClient`` lazily imported after the guard.
+- ``db``: a clean SQLAlchemy session, with the schema dropped and
+  recreated before each test that requests it.
+"""
 import os
 
 import pytest

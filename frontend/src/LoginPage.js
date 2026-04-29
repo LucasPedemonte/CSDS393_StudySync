@@ -5,6 +5,8 @@
  * picker for new users), Google sign-in, and password reset. After a
  * successful auth, the new/returning user is upserted into the
  * StudySync backend via /sync-user before navigating to /home.
+ *
+ * @module LoginPage
  */
 import { useState, useEffect } from "react";
 import "./LoginPage.css";
@@ -55,7 +57,7 @@ const LoginPage = () => {
    * Postgres database via /sync-user, then navigate to /home. Falls
    * back to displayName / "New User" if no name was provided.
    *
-   * @param {import("firebase/auth").User} user - Firebase user object.
+   * @param {Object} user - Firebase user object (from firebase/auth).
    * @param {string} role - Role to record (Student / TA / Admin).
    * @param {string|null} name - Optional display name override.
    */

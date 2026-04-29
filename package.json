@@ -1,5 +1,15 @@
 {
+  "name": "studysync",
+  "private": true,
+  "scripts": {
+    "docs:openapi": "cd backend && ../venv/bin/python export_openapi.py",
+    "docs:backend": "cd backend && ../venv/bin/pdoc ./database.py ./models.py -o ../docs/backend",
+    "docs:frontend": "cd frontend && npm run docs",
+    "docs": "npm run docs:openapi && npm run docs:backend && npm run docs:frontend"
+  },
   "dependencies": {
-    "firebase": "^12.9.0"
+    "axios": "^1.13.6",
+    "firebase": "^12.9.0",
+    "recharts": "^3.8.0"
   }
 }

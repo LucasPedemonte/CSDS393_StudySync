@@ -1,3 +1,17 @@
+"""Permission and inbox-shape tests against the live FastAPI app.
+
+Two concerns:
+
+- Role gating: a Student must not be able to delete a post (only TAs
+  and Admins can).
+- Inbox/message endpoint contracts: response shape and required-param
+  validation for ``/conversations/inbox/global`` and ``/messages``,
+  plus a Hypothesis property-based pass over the inbox endpoint.
+
+These tests share a module-level ``TestClient`` and do not use the
+``db`` fixture from conftest, so they run against whatever database
+``main.app`` is configured for.
+"""
 import pytest
 from fastapi.testclient import TestClient
 from main import app
@@ -5,28 +19,29 @@ from hypothesis import given, strategies as st
 
 client = TestClient(app)
 
-# test to make sure that a student can not delete a post
+
 def test_student_cannot_delete_post():
+    """DELETE /posts/{id} as a Student must return 403 with the expected detail."""
     response = client.delete("/posts/1?user_uid=student_user_123")
     
     # Assert that the backend blocks the action
     assert response.status_code == 403
     assert response.json()["detail"] == "Only TAs or Admins can delete posts."
 
-# Verifies the inbox returns the expected data structure.
 def test_get_global_inbox_structure():
+    """Global inbox must return a JSON list (the conversation feed shape)."""
     response = client.get("/conversations/inbox/global?user_uid=test_user")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
     
-# Verifies that a new user with no chats gets an empty list, not an error.
 def test_get_global_inbox_empty():
+    """A user with no conversations should get an empty list, not a 404 or error."""
     response = client.get("/conversations/inbox/global?user_uid=new_user_999")
     assert response.status_code == 200
     assert response.json() == []
 
-# Verifies fetching public group messages for a specific course.
 def test_get_class_discussion_messages():
+    """Fetching the public class group chat (is_group=true) must return a list."""
     params = {
         "user1": "test_user",
         "user2": "GROUP_CHAT", 
@@ -38,8 +53,8 @@ def test_get_class_discussion_messages():
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
-#    """Verifies the backend returns 422 Unprocessable Entity if UID is missing."""
 def test_global_inbox_missing_params():
+    """Global inbox without the required user_uid query param must 422 (FastAPI validation)."""
     response = client.get("/conversations/inbox/global") # No query param
     assert response.status_code == 422
 

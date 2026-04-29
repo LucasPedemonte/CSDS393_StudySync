@@ -1,0 +1,15 @@
+{
+  "source": {
+    "include": ["src"],
+    "includePattern": "\\.js$",
+    "excludePattern": "(\\.test\\.js$|setupTests\\.js$|reportWebVitals\\.js$|node_modules)"
+  },
+  "opts": {
+    "recurse": true,
+    "destination": "../docs/frontend"
+  },
+  "templates": {
+    "cleverLinks": true,
+    "monospaceLinks": false
+  }
+}

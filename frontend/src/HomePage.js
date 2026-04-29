@@ -3,6 +3,8 @@
  * and lets them join an existing course by code or, for TA/Admin
  * users, create a new course. Each course tile links into the
  * class-scoped routes under `/class/:courseId/...`.
+ *
+ * @module HomePage
  */
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";

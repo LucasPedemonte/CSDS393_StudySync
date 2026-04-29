@@ -1,9 +1,13 @@
 /**
+ * Chat page used in two modes selected by the `isGlobal` prop:
+ *
  * - Global inbox (`isGlobal=true`, mounted at /inbox): every
  *   conversation the current user belongs to, across courses and DMs.
  * - Class chat (`isGlobal=false`, mounted at /class/:courseId/chat):
  *   the auto-provisioned course-wide group chat plus 1:1 DMs with
  *   classmates.
+ *
+ * @module ChatPage
  */
 import { useEffect, useState, useCallback} from "react";
 import { onAuthStateChanged } from "firebase/auth";

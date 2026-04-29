@@ -3,6 +3,8 @@
  *
  * Renders the StudySync brand, the three top-level links (Classes /
  * Discussion / Personal), and a logout button.
+ *
+ * @module Navbar
  */
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";

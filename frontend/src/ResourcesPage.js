@@ -1,8 +1,12 @@
 /**
+ * Class library / resource board (mounted at /class/:courseId/resources).
+ *
  * Lists resource posts for the current course, supports creating new
  * posts (title, description, optional link), upvoting and downvoting,
  * flagging for moderation, and deletion by the original author or
  * privileged users.
+ *
+ * @module ResourcesPage
  */
 import { useState, useEffect, useCallback } from "react";
 import { auth } from "./firebase";

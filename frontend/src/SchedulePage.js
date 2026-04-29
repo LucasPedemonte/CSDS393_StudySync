@@ -1,10 +1,14 @@
 /**
+ * Class-scoped study-session scheduler (mounted at /class/:courseId/schedule).
+ *
  * Lets students browse and create solo or group study sessions for the
  * current course, sync availability from Google Calendar via Google
  * Identity Services, and view a weekly calendar grid. Helper utilities
  * at the top of the file (`loadGoogleScript`, `getWeekRange`,
  * `formatHourLabel`, …) are used throughout the component to keep the
  * render logic readable.
+ *
+ * @module SchedulePage
  */
 import "./SchedulePage.css";
 import { useEffect, useState, useCallback } from "react";
