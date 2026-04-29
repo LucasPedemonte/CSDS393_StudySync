@@ -4,6 +4,7 @@ import axios from "axios";
 import { auth } from "./firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import "./HomePage.css";
+import API_BASE_URL from "./config";
 
 const HomePage = () => {
   const [courses, setCourses] = useState([]);
@@ -18,7 +19,7 @@ const HomePage = () => {
   // Fetch user profile to check for TA/Admin roles
   const fetchProfile = useCallback(async (firebase_uid) => {
     try {
-      const response = await fetch(`http://localhost:8000/user/${firebase_uid}`);
+      const response = await fetch(`${API_BASE_URL}/user/${firebase_uid}`);
       if (response.ok) {
         const data = await response.json();
         setUserProfile(data);
@@ -32,7 +33,7 @@ const HomePage = () => {
     if (!firebase_uid) return;
     try {
       const res = await axios.get(
-        `http://localhost:8000/users/${firebase_uid}/courses`
+        `${API_BASE_URL}/users/${firebase_uid}/courses`
       );
       setCourses(res.data);
     } catch (err) {
@@ -57,7 +58,7 @@ const HomePage = () => {
 
     try {
       await axios.post(
-        `http://localhost:8000/courses/join?course_code=${courseCode}&firebase_uid=${user.uid}`
+        `${API_BASE_URL}/courses/join?course_code=${courseCode}&firebase_uid=${user.uid}`
       );
       setCourseCode("");
       setShowJoinModal(false);
@@ -73,7 +74,7 @@ const HomePage = () => {
     if (!user) return;
 
     try {
-      await axios.post("http://localhost:8000/courses", {
+      await axios.post(`${API_BASE_URL}/courses`, {
         name: newCourseName,
         course_code: newCourseCode,
         owner_id: user.uid, // Use Firebase UID

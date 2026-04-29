@@ -3,6 +3,7 @@ import { auth } from "./firebase";
 import { useParams } from "react-router-dom";
 import "./LoginPage.css";
 import "./ResourcesPage.css";
+import API_BASE_URL from "./config";
 
 const ResourcesPage = () => {
   const { courseId } = useParams();
@@ -25,7 +26,7 @@ const ResourcesPage = () => {
       if (firebaseUser) {
         try {
           const response = await fetch(
-            `http://localhost:8000/user/${firebaseUser.uid}`,
+            `${API_BASE_URL}/user/${firebaseUser.uid}`,
           );
           if (response.ok) {
             const userData = await response.json();
@@ -57,7 +58,7 @@ const ResourcesPage = () => {
         params.append("current_user_uid", currentUser.uid);
       }
       const response = await fetch(
-        `http://localhost:8000/posts?${params.toString()}`,
+        `${API_BASE_URL}/posts?${params.toString()}`,
       );
       if (!response.ok) throw new Error("Failed to fetch posts");
       const data = await response.json();
@@ -74,7 +75,7 @@ const ResourcesPage = () => {
     if (!window.confirm("Are you sure you want to flag this post for review?"))
       return;
     try {
-      const res = await fetch(`http://localhost:8000/posts/${postId}/flag`, {
+      const res = await fetch(`${API_BASE_URL}/posts/${postId}/flag`, {
         method: "POST",
       });
       if (res.ok) {
@@ -138,7 +139,7 @@ const ResourcesPage = () => {
 
       // JSON body for post content
       const response = await fetch(
-        `http://localhost:8000/posts?${params.toString()}`,
+        `${API_BASE_URL}/posts?${params.toString()}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -167,7 +168,7 @@ const ResourcesPage = () => {
     if (!currentUser) return;
     try {
       const response = await fetch(
-        `http://localhost:8000/posts/${postId}/vote?user_uid=${currentUser.uid}&vote=${newVote}`,
+        `${API_BASE_URL}/posts/${postId}/vote?user_uid=${currentUser.uid}&vote=${newVote}`,
         { method: "POST" },
       );
       if (!response.ok) throw new Error("Failed to update vote");
@@ -219,7 +220,7 @@ const ResourcesPage = () => {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/posts/${postId}?user_uid=${currentUser.uid}`,
+        `${API_BASE_URL}/posts/${postId}?user_uid=${currentUser.uid}`,
         { method: "DELETE" },
       );
       if (!response.ok) throw new Error("Failed to delete post");

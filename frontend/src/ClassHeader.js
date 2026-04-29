@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { NavLink, useParams, useNavigate } from "react-router-dom";
 import { auth } from "./firebase";
 import "./ClassHeader.css";
+import API_BASE_URL from "./config";
 
 const ClassHeader = () => {
   const { courseId } = useParams();
@@ -17,7 +18,7 @@ const ClassHeader = () => {
         const user = auth.currentUser;
         if (!user) return;
 
-        const response = await fetch(`http://localhost:8000/users/${user.uid}/courses`);
+        const response = await fetch(`${API_BASE_URL}/users/${user.uid}/courses`);
         if (response.ok) {
           const data = await response.json();
           setCourses(data);
@@ -127,6 +128,12 @@ const ClassHeader = () => {
           className={({ isActive }) => `sec-nav-link ${isActive ? "active" : ""}`}
         >
           Study Sessions
+        </NavLink>
+        <NavLink
+          to="/ai-chat"
+          className={({ isActive }) => `sec-nav-link ${isActive ? "active" : ""}`}
+        >
+          AI
         </NavLink>
       </nav>
     </div>

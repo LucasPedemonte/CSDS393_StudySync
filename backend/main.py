@@ -826,11 +826,15 @@ def join_course(
 
     user = db.query(models.User).filter(models.User.firebase_uid == firebase_uid).first()
     if not user:
+        print(f"ERROR: User not found with firebase_uid={firebase_uid}")
         raise HTTPException(status_code=404, detail="User not found.")
 
     course = db.query(models.Course).filter(models.Course.course_code == normalized_code).first()
     if not course:
-        raise HTTPException(status_code=404, detail="Invalid course code.")
+        all_courses = db.query(models.Course).all()
+        available_codes = [c.course_code for c in all_courses]
+        print(f"ERROR: Course '{normalized_code}' not found. Available courses: {available_codes}")
+        raise HTTPException(status_code=404, detail=f"Invalid course code. Available: {', '.join(available_codes) if available_codes else 'No courses exist'}")
     
     existing = db.query(models.Enrollment).filter(
         models.Enrollment.user_id == firebase_uid, 
@@ -1313,3 +1317,78 @@ def get_availability(
         })
 
     return {"availability": grouped}
+
+
+# ============================================================================
+# AI CHAT ENDPOINT
+# ============================================================================
+from ollama_helper import query_ollama, build_context_prompt
+
+class AIChatRequest(BaseModel):
+    question: str
+    firebase_uid: str
+
+@app.post("/ai-chat")
+def ai_chat(request: AIChatRequest, db: Session = Depends(get_db)):
+    """
+    Enhanced AI chat endpoint with comprehensive user context
+    """
+    # Get user context
+    user = db.query(models.User).filter(models.User.firebase_uid == request.firebase_uid).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get user's courses with member counts
+    enrollments = db.query(models.Enrollment).filter(
+        models.Enrollment.user_id == request.firebase_uid
+    ).all()
+    
+    courses = []
+    for enrollment in enrollments:
+        course = db.query(models.Course).filter(models.Course.id == enrollment.course_id).first()
+        if course:
+            member_count = db.query(models.Enrollment).filter(
+                models.Enrollment.course_id == course.id
+            ).count()
+            courses.append({
+                "name": course.name, 
+                "code": course.course_code,
+                "members": member_count
+            })
+    
+    # Get recent study sessions
+    recent_sessions = db.query(models.StudySession).filter(
+        models.StudySession.creator_email == user.email
+    ).order_by(models.StudySession.created_at.desc()).limit(5).all()
+    
+    study_sessions = [{
+        "title": s.title,
+        "type": s.session_type,
+        "starts_at": s.starts_at.isoformat() if s.starts_at else None
+    } for s in recent_sessions]
+    
+    # Get conversation participation
+    conversation_count = db.query(models.ConversationParticipant).filter(
+        models.ConversationParticipant.user_uid == request.firebase_uid
+    ).count()
+    
+    # Build comprehensive context
+    db_context = {
+        "user_info": {
+            "full_name": user.full_name,
+            "email": user.email,
+            "role": user.role
+        },
+        "courses": courses,
+        "study_sessions": study_sessions,
+        "active_conversations": conversation_count
+    }
+    
+    # Build prompt and query Ollama
+    prompt = build_context_prompt(request.question, db_context)
+    response = query_ollama(prompt)
+    
+    if response is None:
+        raise HTTPException(status_code=503, detail="AI service unavailable. Make sure Ollama is running.")
+    
+    return {"answer": response}

@@ -49,6 +49,12 @@ const Navbar = () => {
         >
           Personal
         </Link>
+        <Link
+          to="/ai-chat"
+          className={`navbar-link ${isActive("/ai-chat") ? "active" : ""}`}
+        >
+          AI Assistant
+        </Link>
 
         <button
           className="navbar-logout-btn"

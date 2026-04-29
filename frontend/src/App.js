@@ -5,6 +5,7 @@ import SchedulePage from "./SchedulePage";
 import ChatPage from "./ChatPage";
 import ResourcesPage from "./ResourcesPage";
 import DashboardPage from "./DashboardPage";
+import AiChat from "./AiChat";
 import ProtectedRoute from "./ProtectedRoute";
 import Navbar from "./Navbar";
 import ClassHeader from "./ClassHeader";
@@ -39,6 +40,7 @@ function App() {
           <Route path="/home" element={<HomePage />} />
           <Route path="/dashboard" element={<DashboardPage isClassScoped={false} />} />
           <Route path="/inbox" element={<ChatPage isGlobal={true} />} />
+          <Route path="/ai-chat" element={<AiChat />} />
         </Route>
 
         {/* Class Pages with Navbar + Class Header + Secondary Nav */}

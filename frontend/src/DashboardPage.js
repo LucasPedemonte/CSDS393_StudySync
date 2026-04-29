@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { auth } from "./firebase";
+import API_BASE_URL from "./config";
 import {
   onAuthStateChanged,
   EmailAuthProvider,
@@ -56,7 +57,7 @@ const DashboardPage = ({ isClassScoped = false }) => {
 
   const fetchFlaggedPosts = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/posts/flagged`);
+      const res = await fetch("${API_BASE_URL}/posts/flagged");
       if (res.ok) {
         const data = await res.json();
         setFlaggedPosts(data);
@@ -129,7 +130,7 @@ const DashboardPage = ({ isClassScoped = false }) => {
   const handleDismissFlag = async (postId) => {
     try {
       const res = await fetch(
-        `${API_BASE}/posts/${postId}/dismiss-flag`,
+        `${API_BASE_URL}/posts/${postId}/dismiss-flag`,
         {
           method: "POST",
         },
@@ -149,7 +150,7 @@ const DashboardPage = ({ isClassScoped = false }) => {
       return;
     try {
       const res = await fetch(
-        `${API_BASE}/posts/${postId}?user_uid=${userProfile.firebase_uid}`,
+        `${API_BASE_URL}/posts/${postId}?user_uid=${userProfile.firebase_uid}`,
         { method: "DELETE" },
       );
       if (res.ok) {
@@ -212,7 +213,7 @@ const DashboardPage = ({ isClassScoped = false }) => {
       }
 
       const response = await fetch(
-        `${API_BASE}/user/${user.uid}/update`,
+        `${API_BASE_URL}/user/${user.uid}/update`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },

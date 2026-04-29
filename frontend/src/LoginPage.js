@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import "./LoginPage.css";
 import { useNavigate } from "react-router-dom";
+import API_BASE_URL from "./config";
 
 import {
   signInWithEmailAndPassword,
@@ -44,7 +45,7 @@ const LoginPage = () => {
   // --- SYNC FUNCTION ---
   const syncWithBackend = async (user, role, name) => {
     try {
-      const response = await fetch("http://localhost:8000/sync-user", {
+      const response = await fetch(`${API_BASE_URL}/sync-user`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -1,30 +1,11 @@
-Frontend Integration Guide
-Base API URL: http://127.0.0.1:8000
+# Frontend README
 
-How to connect to the Login API:
-Use Axios or the Fetch API to send the user's credentials to the backend.
+The React app lives in this directory. The current source of truth for setup, environment variables, usage examples, and Markov deployment steps is the root [README.md](../README.md).
 
-Endpoint: POST /login
+Quick reference:
 
-JavaScript
-```
-// Example Request (using Axios):
-import axios from 'axios';
-
-const handleLogin = async (email, password) => {
-  try {
-    const response = await axios.post('http://127.0.0.1:8000/login', {
-      email: email,
-      password: password
-    });
-    
-    // On success, you will receive: { "status": "success", "user": "Name", "role": "student" }
-    console.log("Welcome:", response.data.user);
-    
-  } catch (error) {
-    console.error("Login failed:", error.response.data.detail);
-  }
-};
-```
-Important Note on CORS:
-The backend is currently configured to allow requests from http://localhost:3000 (React's default port). If you run your frontend on a different port, you need to update the allowed origins in backend/main.py.
+- Install: `npm install`
+- Config: create `frontend/.env` from `frontend/.env.example`
+- Dev server: `npm start`
+- Production build: `npm run build`
+- Frontend commands should be run from `frontend/`, not the repository root.

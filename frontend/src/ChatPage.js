@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 import "./LoginPage.css";
 import "./ChatPage.css";
 import { auth } from "./firebase";
+import API_BASE_URL from "./config";
 
 const ROLE_PRIORITY = {
   Admin: 0,
@@ -31,7 +32,7 @@ const ChatPage = ({ isGlobal = true }) => {
         try {
           // 1. Load User Profile
           const profileRes = await fetch(
-            `http://localhost:8000/user/${user.uid}`,
+            `${API_BASE_URL}/user/${user.uid}`,
           );
           if (profileRes.ok) {
             const profileData = await profileRes.json();
@@ -42,7 +43,7 @@ const ChatPage = ({ isGlobal = true }) => {
           if (isGlobal) {
             // GLOBAL VIEW: Fetch only active conversations from across all classes
             const inboxRes = await fetch(
-              `http://localhost:8000/conversations/inbox/global?user_uid=${user.uid}`,
+              `${API_BASE_URL}/conversations/inbox/global?user_uid=${user.uid}`,
             );
             if (inboxRes.ok) {
               const activeConversations = await inboxRes.json();
@@ -52,7 +53,7 @@ const ChatPage = ({ isGlobal = true }) => {
             }
           } else {
             // CLASS VIEW: Fetch all students/TAs in the system so you can start new chats
-            const usersRes = await fetch("http://localhost:8000/users");
+            const usersRes = await fetch("${API_BASE_URL}/users");
             if (usersRes.ok) {
               const allUsers = await usersRes.json();
               // Filter out yourself
@@ -97,7 +98,7 @@ const ChatPage = ({ isGlobal = true }) => {
       }
 
       const res = await fetch(
-        `http://localhost:8000/messages?${params.toString()}`,
+        `${API_BASE_URL}/messages?${params.toString()}`,
       );
       if (res.ok) {
         const data = await res.json();
@@ -138,7 +139,7 @@ const ChatPage = ({ isGlobal = true }) => {
         is_group: selectedUser.is_group || false,
       };
 
-      const res = await fetch("http://localhost:8000/messages", {
+      const res = await fetch("${API_BASE_URL}/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
