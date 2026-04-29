@@ -1,4 +1,9 @@
-// src/firebase.js
+/**
+ * Firebase client setup. Reads project config from REACT_APP_FIREBASE_*
+ * environment variables and exports a single shared `auth` instance.
+ *
+ * @module firebase
+ */
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 

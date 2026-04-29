@@ -1,3 +1,12 @@
+"""
+- Wires up the FastAPI app and CORS for the React frontend.
+- Defines Pydantic request/response schemas alongside their routes.
+- Implements all REST endpoints, grouped by feature: users & profile,
+  courses & enrollment, posts & moderation, conversations & messages,
+  study groups, study sessions, and Google Calendar availability sync.
+- Runs lightweight additive schema migrations at startup via
+  ``ensure_schema_updates`` so local dev databases stay compatible.
+"""
 from fastapi import FastAPI, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func, text, or_
@@ -8,9 +17,6 @@ import models
 from typing import List, Optional
 from datetime import datetime, timedelta, timezone
 
-# WARNING: This deletes all data! 
-# Uncomment once to reset the schema for your new multi-class structure.
-# Base.metadata.drop_all(bind=engine)
 
 def ensure_schema_updates():
     """Apply minimal additive schema updates for local development."""

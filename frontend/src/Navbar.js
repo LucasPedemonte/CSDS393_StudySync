@@ -1,3 +1,11 @@
+/**
+ * Top-of-page global navigation.
+ *
+ * Renders the StudySync brand, the three top-level links (Classes /
+ * Discussion / Personal), and a logout button.
+ *
+ * @module Navbar
+ */
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { auth } from "./firebase";
@@ -12,10 +20,15 @@ const Navbar = () => {
   // Helper to check if a path is active, ignoring nested class routes for global links
   const isActive = (path) => location.pathname === path;
 
+  /**
+   * Sign the user out of Firebase, clear cached identity, and bounce
+   * back to the login page. Errors are logged but not surfaced to the
+   * user.
+   */
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      localStorage.removeItem("userEmail"); 
+      localStorage.removeItem("userEmail");
       navigate("/");
     } catch (error) {
       console.error("Logout failed:", error);

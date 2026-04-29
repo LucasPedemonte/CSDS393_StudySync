@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: ClassHeader.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: ClassHeader.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Class-scoped header shown above ClassLayout pages.
+ *
+ * Reads the `:courseId` URL param, fetches the user's enrolled courses
+ * to populate a class-switcher dropdown, and renders the secondary tab
+ * bar (Summary / Library / Chat / Study Sessions) for the current class.
+ *
+ * @module ClassHeader
+ */
+import { useState, useEffect } from "react";
+import { NavLink, useParams, useNavigate } from "react-router-dom";
+import { auth } from "./firebase";
+import "./ClassHeader.css";
+
+const ClassHeader = () => {
+  const { courseId } = useParams();
+  const navigate = useNavigate();
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [courses, setCourses] = useState([]);
+  const [currentCourse, setCurrentCourse] = useState(null);
+
+  // Fetch user's courses for the dropdown
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const user = auth.currentUser;
+        if (!user) return;
+
+        const response = await fetch(`http://localhost:8000/users/${user.uid}/courses`);
+        if (response.ok) {
+          const data = await response.json();
+          setCourses(data);
+          
+          // Find current course
+          const current = data.find((c) => c.id === parseInt(courseId));
+          if (current) {
+            setCurrentCourse(current);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching courses for dropdown:", err);
+      }
+    };
+
+    if (courseId) {
+      fetchCourses();
+    }
+  }, [courseId]);
+
+  const handleCourseSwitch = (newCourseId) => {
+    // Navigate to summary page of the new course
+    navigate(`/class/${newCourseId}/summary`);
+    setShowDropdown(false);
+  };
+
+  return (
+    &lt;div className="class-header-container">
+      {/* Class Title with Dropdown */}
+      &lt;div className="class-header-top">
+        &lt;div className="class-title-with-dropdown">
+          &lt;h2 className="class-title">
+            {currentCourse?.name || "Course"}
+          &lt;/h2>
+          &lt;button
+            className="dropdown-trigger"
+            onClick={() => setShowDropdown(!showDropdown)}
+            title="Switch classes"
+          >
+            &lt;svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              &lt;polyline points="6 9 12 15 18 9">&lt;/polyline>
+            &lt;/svg>
+          &lt;/button>
+
+          {/* Dropdown Menu */}
+          {showDropdown &amp;&amp; (
+            &lt;div className="class-dropdown">
+              &lt;div className="dropdown-label">Switch Class&lt;/div>
+              {courses.length > 0 ? (
+                &lt;div className="dropdown-list">
+                  {courses.map((course) => (
+                    &lt;button
+                      key={course.id}
+                      className={`dropdown-item ${
+                        course.id === currentCourse?.id ? "active" : ""
+                      }`}
+                      onClick={() => handleCourseSwitch(course.id)}
+                    >
+                      &lt;span className="course-icon">
+                        {course.course_code[0]}
+                      &lt;/span>
+                      &lt;div className="course-info">
+                        &lt;div className="course-name">{course.name}&lt;/div>
+                        &lt;div className="course-code">{course.course_code}&lt;/div>
+                      &lt;/div>
+                      {course.id === currentCourse?.id &amp;&amp; (
+                        &lt;span className="check-mark">✓&lt;/span>
+                      )}
+                    &lt;/button>
+                  ))}
+                &lt;/div>
+              ) : (
+                &lt;div className="dropdown-empty">No classes found&lt;/div>
+              )}
+            &lt;/div>
+          )}
+        &lt;/div>
+
+        {/* Course Code and Quick Info */}
+        &lt;div className="class-quick-info">
+          &lt;span className="course-code-badge">{currentCourse?.course_code}&lt;/span>
+        &lt;/div>
+      &lt;/div>
+
+      {/* Secondary Navigation (Tabs) */}
+      &lt;nav className="secondary-navbar">
+        &lt;NavLink
+          to={`/class/${courseId}/summary`}
+          className={({ isActive }) => `sec-nav-link ${isActive ? "active" : ""}`}
+        >
+          Summary
+        &lt;/NavLink>
+        &lt;NavLink
+          to={`/class/${courseId}/resources`}
+          className={({ isActive }) => `sec-nav-link ${isActive ? "active" : ""}`}
+        >
+          Library
+        &lt;/NavLink>
+        &lt;NavLink
+          to={`/class/${courseId}/chat`}
+          className={({ isActive }) => `sec-nav-link ${isActive ? "active" : ""}`}
+        >
+          Chat
+        &lt;/NavLink>
+        &lt;NavLink
+          to={`/class/${courseId}/schedule`}
+          className={({ isActive }) => `sec-nav-link ${isActive ? "active" : ""}`}
+        >
+          Study Sessions
+        &lt;/NavLink>
+      &lt;/nav>
+    &lt;/div>
+  );
+};
+
+export default ClassHeader;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-App.html">App</a></li><li><a href="module-CalendarPage.html">CalendarPage</a></li><li><a href="module-ChatPage.html">ChatPage</a></li><li><a href="module-ClassHeader.html">ClassHeader</a></li><li><a href="module-DashboardPage.html">DashboardPage</a></li><li><a href="module-HomePage.html">HomePage</a></li><li><a href="module-LoginPage.html">LoginPage</a></li><li><a href="module-Navbar.html">Navbar</a></li><li><a href="module-ProtectedRoute.html">ProtectedRoute</a></li><li><a href="module-ResourcesPage.html">ResourcesPage</a></li><li><a href="module-SchedulePage.html">SchedulePage</a></li><li><a href="module-firebase.html">firebase</a></li><li><a href="module-index.html">index</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Wed Apr 29 2026 18:41:17 GMT-0400 (Eastern Daylight Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

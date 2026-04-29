@@ -1,4 +1,12 @@
+"""Tests for the resource-library CRUD path on /posts.
+
+Covers the create-and-list happy path and the role-gated delete:
+Students can create posts, but only TAs/Admins may delete them.
+"""
+
+
 def _seed_users_course(db):
+    """Create one TA, one Student, and a course owned by the TA."""
     import models
 
     ta = models.User(
@@ -29,6 +37,7 @@ def _seed_users_course(db):
 
 
 def test_posts_create_and_list(client, db):
+    """A Student can POST a resource post and the new post appears in GET /posts."""
     seeded = _seed_users_course(db)
     course_id = seeded["course"].id
 
@@ -54,6 +63,7 @@ def test_posts_create_and_list(client, db):
 
 
 def test_posts_delete_requires_ta_or_admin(client, db):
+    """DELETE /posts/{id} must 403 for the student author and 200 for the TA."""
     seeded = _seed_users_course(db)
     course_id = seeded["course"].id
 

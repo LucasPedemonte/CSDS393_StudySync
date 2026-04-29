@@ -1,3 +1,13 @@
+/**
+ * Class library / resource board (mounted at /class/:courseId/resources).
+ *
+ * Lists resource posts for the current course, supports creating new
+ * posts (title, description, optional link), upvoting and downvoting,
+ * flagging for moderation, and deletion by the original author or
+ * privileged users.
+ *
+ * @module ResourcesPage
+ */
 import { useState, useEffect, useCallback } from "react";
 import { auth } from "./firebase";
 import { useParams } from "react-router-dom";
@@ -44,7 +54,11 @@ const ResourcesPage = () => {
     return () => unsubscribe();
   }, []);
 
-  // Fetch posts for this course
+  /**
+   * Load posts for the current course. Passing the user's UID lets
+   * the backend annotate each post with `user_vote` so we can render
+   * the correct upvote/downvote highlight.
+   */
   const fetchPosts = useCallback(async () => {
     try {
       setLoading(true);
@@ -70,6 +84,7 @@ const ResourcesPage = () => {
     }
   }, [courseId, currentUser?.uid]);
 
+  /** Flag a post for TA/Admin review and optimistically mark it flagged in the local list. */
   const handleFlagPost = async (postId) => {
     if (!window.confirm("Are you sure you want to flag this post for review?"))
       return;
@@ -106,7 +121,11 @@ const ResourcesPage = () => {
     setFormError(null);
   };
 
-  // Handle post submission
+  /**
+   * Validate and submit the new-post form: title required, optional
+   * description must be ≥5 chars, optional resource link must start
+   * with http(s)://. On success, close the form and refresh the list.
+   */
   const handleCreatePost = async (e) => {
     e.preventDefault();
 
@@ -162,7 +181,12 @@ const ResourcesPage = () => {
     }
   };
 
-  // Handle voting: vote = +1 (upvote), -1 (downvote), 0 (neutral)
+  /**
+   * Cast or clear a vote on a post (`newVote` is +1, -1, or 0).
+   * Optimistically updates the local score using the previous user
+   * vote; refetches from the backend if the request fails so the UI
+   * doesn't drift from server truth.
+   */
   const handleVote = async (postId, newVote) => {
     if (!currentUser) return;
     try {
@@ -191,7 +215,7 @@ const ResourcesPage = () => {
     }
   };
 
-  // Format timestamp
+  /** Render an ISO timestamp as "just now" / "Nm ago" / "Nh ago" / "Nd ago" / fallback date. */
   const formatDate = (isoString) => {
     const date = new Date(isoString);
     const now = new Date();
@@ -213,6 +237,7 @@ const ResourcesPage = () => {
     return name ? name.charAt(0).toUpperCase() : "?";
   };
 
+  /** Delete a post after a confirm prompt; backend enforces author/role permissions. */
   const handleDeletePost = async (postId) => {
     if (!window.confirm("Are you sure you want to delete this resource?"))
       return;

@@ -1,3 +1,15 @@
+/**
+ * Dashboard page used in two modes selected by the `isClassScoped` prop:
+ *
+ * - Personal (`isClassScoped=false`, mounted at /dashboard): profile
+ *   editing (name, email, password re-auth) plus, for TA/Admin users,
+ *   a moderation queue of flagged posts.
+ * - Class summary (`isClassScoped=true`, mounted at
+ *   /class/:courseId/summary): upcoming sessions and aggregate study
+ *   stats for the active course.
+ *
+ * @module DashboardPage
+ */
 import { useState, useEffect, useCallback } from "react";
 import { auth } from "./firebase";
 import {
@@ -66,6 +78,11 @@ const DashboardPage = ({ isClassScoped = false }) => {
     }
   }, []);
 
+  /**
+   * Load the upcoming sessions and aggregate study stats for the
+   * current course (class-scoped mode only). Resets to empty values
+   * outside class mode or when the user/profile isn't ready yet.
+   */
   const fetchClassSummary = useCallback(async () => {
     if (!isClassScoped || !courseId || !userProfile?.email) {
       setClassSummary({
@@ -107,6 +124,7 @@ const DashboardPage = ({ isClassScoped = false }) => {
     }
   }, [courseId, isClassScoped, userProfile?.email]);
 
+  /** Format a session's start/end Date pair as a single localized label. */
   const formatSessionTime = (startsAt, endsAt) => {
     const start = new Date(startsAt);
     const end = new Date(endsAt);
@@ -126,6 +144,7 @@ const DashboardPage = ({ isClassScoped = false }) => {
     return `${dayLabel} • ${timeLabel}`;
   };
 
+  /** Moderator action: clear a post's flag and remove it from the queue. */
   const handleDismissFlag = async (postId) => {
     try {
       const res = await fetch(
@@ -142,6 +161,7 @@ const DashboardPage = ({ isClassScoped = false }) => {
     }
   };
 
+  /** Moderator action: confirm and permanently delete a flagged post. */
   const handleDeletePost = async (postId) => {
     if (
       !window.confirm("Are you sure you want to delete this flagged content?")
@@ -183,6 +203,16 @@ const DashboardPage = ({ isClassScoped = false }) => {
     fetchClassSummary();
   }, [fetchClassSummary]);
 
+  /**
+   * Submit profile edits from the modal.
+   *
+   * Email and password changes trigger a two-step flow: the first
+   * submit flips the form into "needs current password" mode, and the
+   * second submit re-authenticates with `EmailAuthProvider` before
+   * applying `updatePassword` / `verifyBeforeUpdateEmail`. Name and
+   * role changes are pushed to the StudySync backend in a single PUT
+   * regardless of the re-auth path.
+   */
   const handleUpdate = async (e) => {
     e.preventDefault();
     const user = auth.currentUser;

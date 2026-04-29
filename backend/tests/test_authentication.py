@@ -1,3 +1,9 @@
+"""Tests for the User Authentication & Profile Management requirement.
+
+Covers the Firebase-sync upsert path (``POST /sync-user``), profile
+fetch and update endpoints, and a Hypothesis property-based pass over
+``/sync-user`` to fuzz unusual but valid inputs.
+"""
 import pytest
 import models
 from fastapi.testclient import TestClient
@@ -7,6 +13,7 @@ from hypothesis import given, strategies as st, settings
 
 
 def _seed_test_users(db):
+    """Insert one Student, one TA, and one Admin so role-gated paths can be exercised."""
     import models
 
     student = models.User(

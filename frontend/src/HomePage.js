@@ -1,3 +1,11 @@
+/**
+ * Home page (post-login landing) — shows the user's enrolled classes
+ * and lets them join an existing course by code or, for TA/Admin
+ * users, create a new course. Each course tile links into the
+ * class-scoped routes under `/class/:courseId/...`.
+ *
+ * @module HomePage
+ */
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -50,6 +58,12 @@ const HomePage = () => {
     return () => unsubscribe();
   }, [fetchUserCourses, fetchProfile]);
 
+  /**
+   * Submit the join-course modal: enroll the current user in the
+   * course identified by `courseCode`. On success, close the modal
+   * and refresh the user's course list. Failure is surfaced via
+   * alert (typical case: bad code or already enrolled).
+   */
   const handleJoinCourse = async (e) => {
     e.preventDefault();
     const user = auth.currentUser;
@@ -67,6 +81,11 @@ const HomePage = () => {
     }
   };
 
+  /**
+   * Submit the create-course modal (TA/Admin only). Owner is the
+   * current Firebase UID. Surfaces the backend's `detail` message on
+   * failure (e.g. duplicate course code).
+   */
   const handleCreateCourse = async (e) => {
     e.preventDefault();
     const user = auth.currentUser;

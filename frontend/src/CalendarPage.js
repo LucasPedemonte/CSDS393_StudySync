@@ -1,3 +1,13 @@
+/**
+ * Standalone calendar / availability page.
+ *
+ * Lets the user sync their Google Calendar busy times into StudySync,
+ * create or join study groups, request meeting-time suggestions based
+ * on group availability, and create solo or group study sessions on a
+ * monthly calendar grid.
+ *
+ * @module CalendarPage
+ */
 import "./LoginPage.css";
 import "./CalendarPage.css";
 import { useEffect, useMemo, useState } from "react";
@@ -46,6 +56,7 @@ const CalendarPage = () => {
     [groups, selectedGroupId]
   );
 
+  /** Lazily inject the Google Identity Services script and resolve once it is ready. */
   const loadGoogleScript = () =>
     new Promise((resolve, reject) => {
       if (window.google?.accounts?.oauth2) {
@@ -68,6 +79,7 @@ const CalendarPage = () => {
       document.body.appendChild(script);
     });
 
+  /** Prompt the user for a Google OAuth token with calendar.readonly scope. */
   const getGoogleAccessToken = async () => {
     await loadGoogleScript();
     return new Promise((resolve, reject) => {
@@ -86,6 +98,7 @@ const CalendarPage = () => {
     });
   };
 
+  /** Load the user's study groups; auto-select the first group if none is selected yet. */
   const fetchGroups = async () => {
     if (!userEmail) return;
     const response = await fetch(
@@ -104,6 +117,7 @@ const CalendarPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userEmail]);
 
+  /** Create a new study group from the form input and switch the active selection to it. */
   const createGroup = async () => {
     if (!groupName.trim()) return;
     setGroupStatus("Creating group...");
@@ -127,6 +141,7 @@ const CalendarPage = () => {
     }
   };
 
+  /** Join an existing group by numeric id, then select it as the active group. */
   const joinGroup = async () => {
     const id = Number(joinGroupId);
     if (!id) return;
@@ -147,6 +162,11 @@ const CalendarPage = () => {
     }
   };
 
+  /**
+   * Pull busy ranges from Google Calendar's freeBusy endpoint over
+   * the next `daysAhead` days and POST them to the backend so other
+   * StudySync features can see when this user is unavailable.
+   */
   const syncGoogleBusyTimes = async () => {
     if (!userEmail) return;
     setSyncStatus("Connecting to Google Calendar...");
@@ -201,6 +221,11 @@ const CalendarPage = () => {
     }
   };
 
+  /**
+   * Ask the backend for meeting-time suggestions for the active group
+   * over the next `daysAhead` days, restricted to working hours
+   * (8am–10pm) and `meetingMinutes` long, in the user's local TZ.
+   */
   const loadSuggestions = async () => {
     if (!selectedGroupId) return;
     setLoadingSuggestions(true);
@@ -269,6 +294,8 @@ const CalendarPage = () => {
     [sessions, selectedDate]
   );
 
+  // Build a 6-week (42-cell) grid for the visible month, padded with
+  // days from the prior/next month so the grid always starts on Sunday.
   const calendarCells = useMemo(() => {
     const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
     const startWeekday = firstDay.getDay();
@@ -289,6 +316,7 @@ const CalendarPage = () => {
 
   const monthLabel = currentMonth.toLocaleDateString([], { month: "long", year: "numeric" });
 
+  /** Load study sessions overlapping the visible 6-week grid for the current user. */
   const loadSessions = async () => {
     if (!userEmail) return;
     const first = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
@@ -320,6 +348,12 @@ const CalendarPage = () => {
     )}`;
   };
 
+  /**
+   * Validate the session form, POST a new session, and on success
+   * reset the title and bump the start/end pickers an hour forward
+   * so chained creation feels natural. Group sessions require an
+   * active group selection.
+   */
   const createStudySession = async () => {
     if (!userEmail) return;
     if (!sessionTitle.trim() || !sessionStart || !sessionEnd) {

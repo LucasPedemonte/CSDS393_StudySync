@@ -1,0 +1,1946 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "FastAPI",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/sync-user": {
+      "post": {
+        "summary": "Sync User",
+        "description": "Synchronizes Firebase Auth user with PostgreSQL database.",
+        "operationId": "sync_user_sync_user_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/{firebase_uid}": {
+      "get": {
+        "summary": "Get User Profile",
+        "description": "Fetch user profile by Firebase UID.",
+        "operationId": "get_user_profile_user__firebase_uid__get",
+        "parameters": [
+          {
+            "name": "firebase_uid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Firebase Uid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/{firebase_uid}/update": {
+      "put": {
+        "summary": "Update User Profile",
+        "description": "Updates profile while preventing login issues during pending email verification.",
+        "operationId": "update_user_profile_user__firebase_uid__update_put",
+        "parameters": [
+          {
+            "name": "firebase_uid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Firebase Uid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "summary": "List Users",
+        "description": "Return all users for chat roster.",
+        "operationId": "list_users_users_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UserSimple"
+                  },
+                  "type": "array",
+                  "title": "Response List Users Users Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{firebase_uid}/courses": {
+      "get": {
+        "summary": "Get User Courses",
+        "description": "Returns all courses a user is enrolled in for the home page grid.",
+        "operationId": "get_user_courses_users__firebase_uid__courses_get",
+        "parameters": [
+          {
+            "name": "firebase_uid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Firebase Uid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CourseResponse"
+                  },
+                  "title": "Response Get User Courses Users  Firebase Uid  Courses Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/courses/{course_id}/members": {
+      "get": {
+        "summary": "Get Course Members",
+        "description": "Returns all enrolled users for a course.",
+        "operationId": "get_course_members_courses__course_id__members_get",
+        "parameters": [
+          {
+            "name": "course_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Course Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserSimple"
+                  },
+                  "title": "Response Get Course Members Courses  Course Id  Members Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/conversations/one-on-one": {
+      "post": {
+        "summary": "Get Or Create One On One",
+        "description": "Creates or retrieves a 1-on-1 DM scoped to a specific course.",
+        "operationId": "get_or_create_one_on_one_conversations_one_on_one_post",
+        "parameters": [
+          {
+            "name": "user_uid_1",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Uid 1"
+            }
+          },
+          {
+            "name": "user_uid_2",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Uid 2"
+            }
+          },
+          {
+            "name": "course_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Course Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/conversations/group": {
+      "get": {
+        "summary": "Get Or Create Group Chat",
+        "description": "Retrieves or creates a group chat for a class or study group.",
+        "operationId": "get_or_create_group_chat_conversations_group_get",
+        "parameters": [
+          {
+            "name": "course_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Course Id"
+            }
+          },
+          {
+            "name": "group_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Group Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/messages": {
+      "get": {
+        "summary": "Get Messages",
+        "description": "Fetch messages for either a private DM or a Class Group chat.",
+        "operationId": "get_messages_messages_get",
+        "parameters": [
+          {
+            "name": "user1",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User1"
+            }
+          },
+          {
+            "name": "user2",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User2"
+            }
+          },
+          {
+            "name": "course_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Course Id"
+            }
+          },
+          {
+            "name": "is_group",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Is Group"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Send Message",
+        "description": "Send a message in either a 1-on-1 or Class Group context.",
+        "operationId": "send_message_messages_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageSend"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/conversations/class/{course_id}": {
+      "get": {
+        "summary": "Get Class Conversation",
+        "description": "Find or create the public group conversation for a specific course.",
+        "operationId": "get_class_conversation_conversations_class__course_id__get",
+        "parameters": [
+          {
+            "name": "course_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Course Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/conversations/inbox/global": {
+      "get": {
+        "summary": "Get Global Inbox",
+        "description": "Fetches ALL active conversations for a user across ALL enrolled courses.\nAppends course codes to group chat names.",
+        "operationId": "get_global_inbox_conversations_inbox_global_get",
+        "parameters": [
+          {
+            "name": "user_uid",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Uid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts": {
+      "post": {
+        "summary": "Create Post",
+        "description": "Create a resource post in a course.",
+        "operationId": "create_post_posts_post",
+        "parameters": [
+          {
+            "name": "course_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Course Id"
+            }
+          },
+          {
+            "name": "author_uid",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Author Uid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Get Posts",
+        "description": "Fetch posts for a course with vote information.",
+        "operationId": "get_posts_posts_get",
+        "parameters": [
+          {
+            "name": "course_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Course Id"
+            }
+          },
+          {
+            "name": "current_user_uid",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Current User Uid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{post_id}/flag": {
+      "post": {
+        "summary": "Flag Post",
+        "description": "Flags a post for TA/Admin review.",
+        "operationId": "flag_post_posts__post_id__flag_post",
+        "parameters": [
+          {
+            "name": "post_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Post Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{post_id}/vote": {
+      "post": {
+        "summary": "Vote On Post",
+        "description": "Vote on a post (+1 upvote, -1 downvote, 0 neutral).",
+        "operationId": "vote_on_post_posts__post_id__vote_post",
+        "parameters": [
+          {
+            "name": "post_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Post Id"
+            }
+          },
+          {
+            "name": "user_uid",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Uid"
+            }
+          },
+          {
+            "name": "vote",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Vote"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{post_id}": {
+      "delete": {
+        "summary": "Delete Post",
+        "description": "Allows TAs and Admins to delete any post.",
+        "operationId": "delete_post_posts__post_id__delete",
+        "parameters": [
+          {
+            "name": "post_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Post Id"
+            }
+          },
+          {
+            "name": "user_uid",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Uid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/flagged": {
+      "get": {
+        "summary": "Get Flagged Posts",
+        "description": "Fetch all posts that have been flagged by users.",
+        "operationId": "get_flagged_posts_posts_flagged_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PostOut"
+                  },
+                  "type": "array",
+                  "title": "Response Get Flagged Posts Posts Flagged Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{post_id}/dismiss-flag": {
+      "post": {
+        "summary": "Dismiss Flag",
+        "description": "Unflags a post (TA determines content is safe).",
+        "operationId": "dismiss_flag_posts__post_id__dismiss_flag_post",
+        "parameters": [
+          {
+            "name": "post_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Post Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/courses": {
+      "post": {
+        "summary": "Create Course",
+        "description": "Creates a new class workspace. Only for Admins/TAs.",
+        "operationId": "create_course_courses_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CourseCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/courses/join": {
+      "post": {
+        "summary": "Join Course",
+        "description": "Enrolls a student via a class code.",
+        "operationId": "join_course_courses_join_post",
+        "parameters": [
+          {
+            "name": "course_code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Course Code"
+            }
+          },
+          {
+            "name": "firebase_uid",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Firebase Uid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/study-groups": {
+      "post": {
+        "summary": "Create Study Group",
+        "description": "Create a study group in a course.",
+        "operationId": "create_study_group_study_groups_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudyGroupCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/study-groups/{group_id}/members": {
+      "post": {
+        "summary": "Add Group Member",
+        "description": "Add a member to a study group.",
+        "operationId": "add_group_member_study_groups__group_id__members_post",
+        "parameters": [
+          {
+            "name": "group_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Group Id"
+            }
+          },
+          {
+            "name": "user_email",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/study-groups/{group_id}": {
+      "get": {
+        "summary": "Get Study Group",
+        "description": "Fetch study group details.",
+        "operationId": "get_study_group_study_groups__group_id__get",
+        "parameters": [
+          {
+            "name": "group_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Group Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/study-groups/course/{course_id}": {
+      "get": {
+        "summary": "Get Course Study Groups",
+        "description": "Fetch all study groups for a course.",
+        "operationId": "get_course_study_groups_study_groups_course__course_id__get",
+        "parameters": [
+          {
+            "name": "course_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Course Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/study-sessions": {
+      "get": {
+        "summary": "Get Study Sessions",
+        "description": "Fetches study sessions for a user, optionally filtered by course.",
+        "operationId": "get_study_sessions_study_sessions_get",
+        "parameters": [
+          {
+            "name": "user_email",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Email"
+            }
+          },
+          {
+            "name": "range_start",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Range Start"
+            }
+          },
+          {
+            "name": "range_end",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Range End"
+            }
+          },
+          {
+            "name": "course_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Course Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create Study Session",
+        "description": "Creates a study session.",
+        "operationId": "create_study_session_study_sessions_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudySessionCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/study-sessions/course/{course_id}": {
+      "get": {
+        "summary": "Get Course Sessions",
+        "description": "Fetch study sessions in a course visible to the requester.",
+        "operationId": "get_course_sessions_study_sessions_course__course_id__get",
+        "parameters": [
+          {
+            "name": "course_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Course Id"
+            }
+          },
+          {
+            "name": "range_start",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Range Start"
+            }
+          },
+          {
+            "name": "range_end",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Range End"
+            }
+          },
+          {
+            "name": "requester_email",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Requester Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/study-sessions/course/{course_id}/summary": {
+      "get": {
+        "summary": "Get Course Session Summary",
+        "description": "Fetch upcoming visible study sessions and completed study hours for a course.",
+        "operationId": "get_course_session_summary_study_sessions_course__course_id__summary_get",
+        "parameters": [
+          {
+            "name": "course_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Course Id"
+            }
+          },
+          {
+            "name": "requester_email",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Requester Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/study-sessions/{session_id}": {
+      "put": {
+        "summary": "Update Study Session",
+        "description": "Updates an existing study session and refreshes invitees/busy blocks.",
+        "operationId": "update_study_session_study_sessions__session_id__put",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudySessionCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/availability/sync": {
+      "post": {
+        "summary": "Sync Availability",
+        "description": "Syncs busy blocks from Google Calendar.",
+        "operationId": "sync_availability_availability_sync_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AvailabilitySync"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/availability/connected": {
+      "get": {
+        "summary": "Check Availability Connected",
+        "description": "Returns whether a user has synced Google Calendar availability.",
+        "operationId": "check_availability_connected_availability_connected_get",
+        "parameters": [
+          {
+            "name": "user_email",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/availability": {
+      "get": {
+        "summary": "Get Availability",
+        "description": "Fetch busy blocks for one or more users in a time range.",
+        "operationId": "get_availability_availability_get",
+        "parameters": [
+          {
+            "name": "user_emails",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "title": "User Emails"
+            }
+          },
+          {
+            "name": "time_min",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Time Min"
+            }
+          },
+          {
+            "name": "time_max",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Time Max"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AvailabilitySync": {
+        "properties": {
+          "user_email": {
+            "type": "string",
+            "title": "User Email"
+          },
+          "starts_at": {
+            "type": "string",
+            "title": "Starts At"
+          },
+          "ends_at": {
+            "type": "string",
+            "title": "Ends At"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone",
+            "default": "UTC"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "default": "google_calendar"
+          },
+          "busy_slots": {
+            "items": {
+              "$ref": "#/components/schemas/BusySlot"
+            },
+            "type": "array",
+            "title": "Busy Slots"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_email",
+          "starts_at",
+          "ends_at",
+          "busy_slots"
+        ],
+        "title": "AvailabilitySync"
+      },
+      "BusySlot": {
+        "properties": {
+          "starts_at": {
+            "type": "string",
+            "title": "Starts At"
+          },
+          "ends_at": {
+            "type": "string",
+            "title": "Ends At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "starts_at",
+          "ends_at"
+        ],
+        "title": "BusySlot"
+      },
+      "CourseCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "course_code": {
+            "type": "string",
+            "title": "Course Code"
+          },
+          "owner_id": {
+            "type": "string",
+            "title": "Owner Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "course_code",
+          "owner_id"
+        ],
+        "title": "CourseCreate"
+      },
+      "CourseResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "course_code": {
+            "type": "string",
+            "title": "Course Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "course_code",
+          "name",
+          "description"
+        ],
+        "title": "CourseResponse"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "MessageSend": {
+        "properties": {
+          "sender_uid": {
+            "type": "string",
+            "title": "Sender Uid"
+          },
+          "receiver_uid": {
+            "type": "string",
+            "title": "Receiver Uid"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "course_id": {
+            "type": "integer",
+            "title": "Course Id"
+          },
+          "is_group": {
+            "type": "boolean",
+            "title": "Is Group",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "sender_uid",
+          "receiver_uid",
+          "content",
+          "course_id"
+        ],
+        "title": "MessageSend"
+      },
+      "PostCreate": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "resource_link": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Link"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "title": "PostCreate"
+      },
+      "PostOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "author_uid": {
+            "type": "string",
+            "title": "Author Uid"
+          },
+          "author_name": {
+            "type": "string",
+            "title": "Author Name"
+          },
+          "author_role": {
+            "type": "string",
+            "title": "Author Role"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "resource_link": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Link"
+          },
+          "score": {
+            "type": "integer",
+            "title": "Score"
+          },
+          "user_vote": {
+            "type": "integer",
+            "title": "User Vote"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "course_id": {
+            "type": "integer",
+            "title": "Course Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "author_uid",
+          "author_name",
+          "author_role",
+          "title",
+          "description",
+          "resource_link",
+          "score",
+          "user_vote",
+          "created_at",
+          "course_id"
+        ],
+        "title": "PostOut"
+      },
+      "StudyGroupCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "course_id": {
+            "type": "integer",
+            "title": "Course Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "course_id"
+        ],
+        "title": "StudyGroupCreate"
+      },
+      "StudySessionCreate": {
+        "properties": {
+          "creator_email": {
+            "type": "string",
+            "title": "Creator Email"
+          },
+          "course_id": {
+            "type": "integer",
+            "title": "Course Id"
+          },
+          "session_type": {
+            "type": "string",
+            "title": "Session Type",
+            "default": "solo"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "starts_at": {
+            "type": "string",
+            "title": "Starts At"
+          },
+          "ends_at": {
+            "type": "string",
+            "title": "Ends At"
+          },
+          "group_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Group Id"
+          },
+          "invitees": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Invitees",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "creator_email",
+          "course_id",
+          "title",
+          "starts_at",
+          "ends_at"
+        ],
+        "title": "StudySessionCreate"
+      },
+      "UserCreate": {
+        "properties": {
+          "firebase_uid": {
+            "type": "string",
+            "title": "Firebase Uid"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "firebase_uid",
+          "email",
+          "full_name",
+          "role"
+        ],
+        "title": "UserCreate"
+      },
+      "UserSimple": {
+        "properties": {
+          "firebase_uid": {
+            "type": "string",
+            "title": "Firebase Uid"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "firebase_uid",
+          "full_name",
+          "email",
+          "role"
+        ],
+        "title": "UserSimple"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
