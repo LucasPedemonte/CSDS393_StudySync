@@ -1,3 +1,6 @@
+/**
+ * User dashboard and course summary view, including moderation controls.
+ */
 import { useState, useEffect, useCallback } from "react";
 import { auth } from "./firebase";
 import API_BASE_URL from "./config";
@@ -35,6 +38,7 @@ const DashboardPage = ({ isClassScoped = false }) => {
   });
   const [classSummaryLoading, setClassSummaryLoading] = useState(false);
 
+  /** Load the authenticated user's profile and seed the edit form. */
   const fetchProfile = useCallback(async (firebase_uid) => {
     try {
       const response = await fetch(
@@ -55,6 +59,7 @@ const DashboardPage = ({ isClassScoped = false }) => {
     }
   }, []);
 
+  /** Load the moderation queue shown to TA and admin users. */
   const fetchFlaggedPosts = useCallback(async () => {
     try {
       const res = await fetch("${API_BASE_URL}/posts/flagged");
@@ -67,6 +72,7 @@ const DashboardPage = ({ isClassScoped = false }) => {
     }
   }, []);
 
+  /** Load course summary metrics for the active class-scoped dashboard. */
   const fetchClassSummary = useCallback(async () => {
     if (!isClassScoped || !courseId || !userProfile?.email) {
       setClassSummary({
@@ -108,6 +114,7 @@ const DashboardPage = ({ isClassScoped = false }) => {
     }
   }, [courseId, isClassScoped, userProfile?.email]);
 
+  /** Format one scheduled session into a compact dashboard label. */
   const formatSessionTime = (startsAt, endsAt) => {
     const start = new Date(startsAt);
     const end = new Date(endsAt);
@@ -127,6 +134,7 @@ const DashboardPage = ({ isClassScoped = false }) => {
     return `${dayLabel} • ${timeLabel}`;
   };
 
+  /** Clear the moderation flag without deleting the resource. */
   const handleDismissFlag = async (postId) => {
     try {
       const res = await fetch(
@@ -143,6 +151,7 @@ const DashboardPage = ({ isClassScoped = false }) => {
     }
   };
 
+  /** Permanently remove a flagged resource post. */
   const handleDeletePost = async (postId) => {
     if (
       !window.confirm("Are you sure you want to delete this flagged content?")
@@ -184,6 +193,7 @@ const DashboardPage = ({ isClassScoped = false }) => {
     fetchClassSummary();
   }, [fetchClassSummary]);
 
+  /** Save profile changes, including re-authenticated auth updates when needed. */
   const handleUpdate = async (e) => {
     e.preventDefault();
     const user = auth.currentUser;

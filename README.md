@@ -11,6 +11,7 @@ Built for CSDS 393: Software Engineering at Case Western Reserve University.
 - [Project Description](#project-description)
 - [Architecture Overview](#architecture-overview)
 - [Tech Stack & Major Dependencies](#tech-stack--major-dependencies)
+- [Source Code Documentation](#source-code-documentation)
 - [Installation & Setup](#installation--setup)
 - [Usage](#usage)
 - [Repository Structure](#repository-structure)
@@ -88,6 +89,30 @@ Key design choices:
 | **Real-time** | WebSocket / WSS (FastAPI native) |
 | **Testing** | pytest, FastAPI TestClient, Jest (Frontend), React Testing Library |
 | **Deployment** | CWRU Markov Teaching Cluster |
+
+---
+
+## Source Code Documentation
+
+StudySync uses a consistent documentation pass based on:
+
+- **Google-style Python docstrings** for backend modules, helper functions, ORM models, and test utilities.
+- **JSDoc-style comments** for major React modules and component-level helper functions.
+- **Automated HTML API documentation** generated with Python's built-in `pydoc` tool.
+
+Exported documentation is included in the repository under:
+
+- `docs/api/index.html` — browsable landing page for generated backend API docs
+- `docs/architecture.png` — high-level architecture diagram used in the README
+
+To regenerate the API docs after code changes:
+
+```bash
+cd backend
+.venv/bin/python generate_api_docs.py
+```
+
+This command rewrites the HTML files in `docs/api/`.
 
 ---
 
@@ -188,6 +213,8 @@ python -m uvicorn main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 Backend docs: `http://127.0.0.1:8000/docs`
+
+Exported API docs in the repository: `docs/api/index.html`
 
 ### 6. Start the frontend
 
@@ -346,6 +373,7 @@ CSDS393_StudySync/
 │       ├── Navbar.js         # Navigation bar
 │       └── ProtectedRoute.js # Auth-gated routing
 ├── docs/                     # Architecture diagrams and exported API documentation
+│   └── api/                  # Generated HTML docs from backend/generate_api_docs.py
 ├── start_postgres.sh         # Markov PostgreSQL helper
 ├── start_services.sh         # Markov backend/frontend helper
 ├── stop_services.sh          # Markov shutdown helper

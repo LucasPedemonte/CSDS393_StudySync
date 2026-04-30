@@ -1,3 +1,5 @@
+"""SQLAlchemy ORM models that define the StudySync data schema."""
+
 from database import Base
 from sqlalchemy import Column, Integer, String, DateTime, Enum, ForeignKey, Text, Boolean
 from sqlalchemy.orm import relationship
@@ -6,12 +8,16 @@ import enum
 
 
 class UserRole(str, enum.Enum):
+    """Supported application roles used for authorization decisions."""
+
     STUDENT = "Student"
     TA = "TA"
     ADMIN = "Admin"
 
 
 class User(Base):
+    """Application user synchronized from Firebase authentication."""
+
     __tablename__ = "users"
 
     # Firebase UID is now the primary key (string)
@@ -31,6 +37,8 @@ class User(Base):
 
 
 class Course(Base):
+    """Course workspace that groups users, posts, chat, and scheduling."""
+
     __tablename__ = "courses"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -49,6 +57,8 @@ class Course(Base):
 
 
 class Enrollment(Base):
+    """Membership record connecting one user to one course."""
+
     __tablename__ = "enrollments"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -61,6 +71,8 @@ class Enrollment(Base):
 
 
 class Conversation(Base):
+    """Direct-message or course-wide chat thread."""
+
     __tablename__ = "conversations"
     
     conversation_id = Column(Integer, primary_key=True, index=True)
@@ -75,6 +87,8 @@ class Conversation(Base):
 
 
 class ConversationParticipant(Base):
+    """Participant mapping for a conversation."""
+
     __tablename__ = "conversation_participants"
     
     participant_id = Column(Integer, primary_key=True, index=True)
@@ -88,6 +102,8 @@ class ConversationParticipant(Base):
 
 
 class Message(Base):
+    """Single chat message stored within a conversation."""
+
     __tablename__ = "messages"
     
     message_id = Column("id", Integer, primary_key=True, index=True)
@@ -102,6 +118,8 @@ class Message(Base):
 
 
 class Post(Base):
+    """Shared course resource post with optional moderation state."""
+
     __tablename__ = "posts"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -120,6 +138,8 @@ class Post(Base):
 
 
 class PostVote(Base):
+    """Per-user vote attached to a resource post."""
+
     __tablename__ = "post_votes"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -131,6 +151,8 @@ class PostVote(Base):
 
 
 class StudyGroup(Base):
+    """Small study team created inside a course."""
+
     __tablename__ = "study_groups"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -144,6 +166,8 @@ class StudyGroup(Base):
 
 
 class StudySession(Base):
+    """Scheduled study meeting for an individual or a group."""
+
     __tablename__ = "study_sessions"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -161,6 +185,8 @@ class StudySession(Base):
 
 
 class StudyGroupMember(Base):
+    """Membership record connecting a user email to a study group."""
+
     __tablename__ = "study_group_members"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -172,6 +198,8 @@ class StudyGroupMember(Base):
 
 
 class UserAvailability(Base):
+    """Busy-time block imported from Google Calendar or local scheduling data."""
+
     __tablename__ = "user_availability"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -184,6 +212,8 @@ class UserAvailability(Base):
 
 
 class StudySessionInvitee(Base):
+    """Email invitee attached to a scheduled study session."""
+
     __tablename__ = "study_session_invitees"
 
     id = Column(Integer, primary_key=True, index=True)

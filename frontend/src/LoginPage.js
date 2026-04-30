@@ -1,3 +1,6 @@
+/**
+ * Authentication page for sign-in, sign-up, Google auth, and account sync.
+ */
 import { useState, useEffect } from "react";
 import "./LoginPage.css";
 import { useNavigate } from "react-router-dom";
@@ -19,7 +22,6 @@ const LoginPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
 
-  // --- STATES FOR DATABASE SYNC ---
   const [showRoleSelection, setShowRoleSelection] = useState(false);
   const [tempUser, setTempUser] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
@@ -42,7 +44,7 @@ const LoginPage = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // --- SYNC FUNCTION ---
+  /** Create or refresh the matching backend user profile after auth succeeds. */
   const syncWithBackend = async (user, role, name) => {
     try {
       const response = await fetch(`${API_BASE_URL}/sync-user`, {
@@ -67,6 +69,7 @@ const LoginPage = () => {
     }
   };
 
+  /** Handle email/password sign-in or sign-up. */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage("");
@@ -102,7 +105,6 @@ const LoginPage = () => {
       console.error(err);
       const code = err?.code || "";
 
-      // If they already exist in Firebase but Postgres failed last time:
       if (code === "auth/email-already-in-use" && !isLogin) {
         setErrorMessage(
           "Account exists in Auth system. Please Sign In to sync your profile.",
@@ -110,7 +112,6 @@ const LoginPage = () => {
         return;
       }
 
-      // Mapping errors to the state
       const friendly =
         code === "auth/invalid-credential"
           ? "Invalid email or password."
@@ -128,6 +129,7 @@ const LoginPage = () => {
     }
   };
 
+  /** Start Google sign-in and route new users through role selection. */
   const handleGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
@@ -141,6 +143,7 @@ const LoginPage = () => {
     }
   };
 
+  /** Send a Firebase password reset email for the entered address. */
   const handleForgotPassword = async (e) => {
     e.preventDefault();
     if (!formData.email) {

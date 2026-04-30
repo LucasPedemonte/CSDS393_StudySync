@@ -1,3 +1,6 @@
+/**
+ * Calendar comparison and study-session scheduling workflow.
+ */
 import "./SchedulePage.css";
 import { useEffect, useState, useCallback } from "react";
 import { auth } from "./firebase";
@@ -6,6 +9,7 @@ import { useParams } from "react-router-dom";
 const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://127.0.0.1:8000";
 const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
+/** Load the Google Identity Services client script once per page session. */
 const loadGoogleScript = () =>
   new Promise((resolve, reject) => {
     if (window.google?.accounts?.oauth2) {
@@ -30,6 +34,7 @@ const loadGoogleScript = () =>
     document.body.appendChild(script);
   });
 
+/** Return the Sunday-to-Sunday date range used by the weekly calendar view. */
 const getWeekRange = (date) => {
   const start = new Date(date);
   start.setHours(0, 0, 0, 0);
@@ -41,14 +46,17 @@ const getWeekRange = (date) => {
   return { start, end };
 };
 
+/** Format one hour marker for the visual calendar grid. */
 const formatHourLabel = (hour) =>
   new Date(2000, 0, 1, hour).toLocaleTimeString([], {
     hour: "numeric",
     minute: "2-digit",
   });
 
+/** Normalize search input for lightweight client-side matching. */
 const normalizeSearchValue = (value) => value.trim().toLowerCase();
 
+/** Convert a Date object into the format expected by datetime-local inputs. */
 const toLocalDateTimeInputValue = (date) => {
   const year = date.getFullYear();
   const month = `${date.getMonth() + 1}`.padStart(2, "0");
@@ -87,6 +95,7 @@ const SchedulePage = () => {
     courseId: courseId || "",
   });
 
+  /** Reset the scheduling modal back to its default state. */
   const resetMeetingForm = useCallback(() => {
     setMeetingForm({
       title: "",
@@ -99,6 +108,7 @@ const SchedulePage = () => {
     setEditingSession(null);
   }, [courseId]);
 
+  /** Request a Google Calendar access token for availability syncing. */
   const getGoogleAccessToken = useCallback(async (prompt = "") => {
     if (!GOOGLE_CLIENT_ID) {
       throw new Error("Missing REACT_APP_GOOGLE_CLIENT_ID in frontend env");
@@ -123,6 +133,7 @@ const SchedulePage = () => {
     });
   }, []);
 
+  /** Load busy-time blocks for the compared classmates during the active week. */
   const fetchAvailability = useCallback(async (emails) => {
     if (!userEmail || emails.length === 0) {
       setAvailabilityByEmail({});
@@ -151,6 +162,7 @@ const SchedulePage = () => {
     }
   }, [currentWeek, userEmail]);
 
+  /** Pull busy blocks from Google Calendar and sync them to the backend. */
   const syncGoogleCalendar = useCallback(async (prompt = "") => {
     if (!userEmail) return;
 
@@ -214,6 +226,7 @@ const SchedulePage = () => {
     }
   }, [currentWeek, fetchAvailability, getGoogleAccessToken, selectedClassmates, userEmail]);
 
+  /** Check whether the current user has already synced calendar availability. */
   const checkGcalConnection = useCallback(async () => {
     if (!userEmail) return;
 

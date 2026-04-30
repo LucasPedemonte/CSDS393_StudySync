@@ -1,3 +1,9 @@
+/**
+ * Root router for the StudySync frontend.
+ *
+ * This module defines the authenticated layouts and maps each major
+ * feature area to its route.
+ */
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import LoginPage from "./LoginPage";
 import HomePage from "./HomePage";
@@ -10,7 +16,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import Navbar from "./Navbar";
 import ClassHeader from "./ClassHeader";
 
-// Layout for Global Pages (Home, Dashboard, Discussion)
+/** Shared layout for authenticated global pages. */
 const GlobalLayout = () => (
   <div className="page with-navbar">
     <Navbar />
@@ -18,7 +24,7 @@ const GlobalLayout = () => (
   </div>
 );
 
-// Layout for Class Pages (with Navbar + Class Header + Secondary Nav)
+/** Shared layout for authenticated course-scoped pages. */
 const ClassLayout = () => (
   <div className="page with-navbar">
     <Navbar />
@@ -30,6 +36,7 @@ const ClassLayout = () => (
 );
 
 function App() {
+  /** Render the application router tree. */
   return (
     <Router>
       <Routes>

@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Python: module models</title>
+</head><body>
+
+<table class="heading">
+<tr class="heading-text decor">
+<td class="title">&nbsp;<br><strong class="title">models</strong></td>
+<td class="extra"><a href=".">index</a><br><a href="file:/home/lap127/StudySyncGit/CSDS393_StudySync/backend/models.py">/home/lap127/StudySyncGit/CSDS393_StudySync/backend/models.py</a></td></tr></table>
+    <p><span class="code">SQLAlchemy&nbsp;ORM&nbsp;models&nbsp;that&nbsp;define&nbsp;the&nbsp;StudySync&nbsp;data&nbsp;schema.</span></p>
+<p>
+<table class="section">
+<tr class="decor pkg-content-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Modules</strong></td></tr>
+    
+<tr><td class="decor pkg-content-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><table><tr><td class="multicolumn"><a href="datetime.html">datetime</a><br>
+</td><td class="multicolumn"><a href="enum.html">enum</a><br>
+</td><td class="multicolumn"></td><td class="multicolumn"></td></tr></table></td></tr></table><p>
+<table class="section">
+<tr class="decor index-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Classes</strong></td></tr>
+    
+<tr><td class="decor index-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><dl>
+<dt class="heading-text"><a href="builtins.html#str">builtins.str</a>(<a href="builtins.html#object">builtins.object</a>)
+</dt><dd>
+<dl>
+<dt class="heading-text"><a href="models.html#UserRole">UserRole</a>(<a href="builtins.html#str">builtins.str</a>, <a href="enum.html#Enum">enum.Enum</a>)
+</dt></dl>
+</dd>
+<dt class="heading-text"><a href="enum.html#Enum">enum.Enum</a>(<a href="builtins.html#object">builtins.object</a>)
+</dt><dd>
+<dl>
+<dt class="heading-text"><a href="models.html#UserRole">UserRole</a>(<a href="builtins.html#str">builtins.str</a>, <a href="enum.html#Enum">enum.Enum</a>)
+</dt></dl>
+</dd>
+<dt class="heading-text">sqlalchemy.orm.decl_api.Base(<a href="builtins.html#object">builtins.object</a>)
+</dt><dd>
+<dl>
+<dt class="heading-text"><a href="models.html#Conversation">Conversation</a>
+</dt><dt class="heading-text"><a href="models.html#ConversationParticipant">ConversationParticipant</a>
+</dt><dt class="heading-text"><a href="models.html#Course">Course</a>
+</dt><dt class="heading-text"><a href="models.html#Enrollment">Enrollment</a>
+</dt><dt class="heading-text"><a href="models.html#Message">Message</a>
+</dt><dt class="heading-text"><a href="models.html#Post">Post</a>
+</dt><dt class="heading-text"><a href="models.html#PostVote">PostVote</a>
+</dt><dt class="heading-text"><a href="models.html#StudyGroup">StudyGroup</a>
+</dt><dt class="heading-text"><a href="models.html#StudyGroupMember">StudyGroupMember</a>
+</dt><dt class="heading-text"><a href="models.html#StudySession">StudySession</a>
+</dt><dt class="heading-text"><a href="models.html#StudySessionInvitee">StudySessionInvitee</a>
+</dt><dt class="heading-text"><a href="models.html#User">User</a>
+</dt><dt class="heading-text"><a href="models.html#UserAvailability">UserAvailability</a>
+</dt></dl>
+</dd>
+</dl>
+ <p>
+<table class="section">
+<tr class="decor title-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><a name="Conversation">class <strong>Conversation</strong></a>(sqlalchemy.orm.decl_api.Base)</td></tr>
+    
+<tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
+<td class="decor title-decor" colspan=2><span class="code"><a href="#Conversation">Conversation</a>(**kwargs)<br>
+&nbsp;<br>
+Direct-message&nbsp;or&nbsp;course-wide&nbsp;chat&nbsp;thread.<br>&nbsp;</span></td></tr>
+<tr><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt>Method resolution order:</dt>
+<dd><a href="models.html#Conversation">Conversation</a></dd>
+<dd>sqlalchemy.orm.decl_api.Base</dd>
+<dd><a href="builtins.html#object">builtins.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="Conversation-__init__"><strong>__init__</strong></a>(self, **kwargs)<span class="grey"><span class="heading-text"> from sqlalchemy.orm.instrumentation</span></span></dt><dd><span class="code">A&nbsp;simple&nbsp;constructor&nbsp;that&nbsp;allows&nbsp;initialization&nbsp;from&nbsp;kwargs.<br>
+&nbsp;<br>
+Sets&nbsp;attributes&nbsp;on&nbsp;the&nbsp;constructed&nbsp;instance&nbsp;using&nbsp;the&nbsp;names&nbsp;and<br>
+values&nbsp;in&nbsp;``kwargs``.<br>
+&nbsp;<br>
+Only&nbsp;keys&nbsp;that&nbsp;are&nbsp;present&nbsp;as<br>
+attributes&nbsp;of&nbsp;the&nbsp;instance's&nbsp;class&nbsp;are&nbsp;allowed.&nbsp;These&nbsp;could&nbsp;be,<br>
+for&nbsp;example,&nbsp;any&nbsp;mapped&nbsp;columns&nbsp;or&nbsp;relationships.</span></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>conversation_id</strong></dt>
+</dl>
+<dl><dt><strong>course</strong></dt>
+</dl>
+<dl><dt><strong>course_id</strong></dt>
+</dl>
+<dl><dt><strong>created_at</strong></dt>
+</dl>
+<dl><dt><strong>group_name</strong></dt>
+</dl>
+<dl><dt><strong>is_group</strong></dt>
+</dl>
+<dl><dt><strong>messages</strong></dt>
+</dl>
+<dl><dt><strong>participants</strong></dt>
+</dl>
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>__mapper__</strong> = &lt;Mapper at 0x7efe9f2f4290; Conversation&gt;</dl>
+
+<dl><dt><strong>__table__</strong> = Table('conversations', MetaData(), Column('conve...ation.&lt;lambda&gt; at 0x7efe9f2da660&gt;)), schema=None)</dl>
+
+<dl><dt><strong>__tablename__</strong> = 'conversations'</dl>
+
+<hr>
+Data descriptors inherited from sqlalchemy.orm.decl_api.Base:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><span class="code">dictionary&nbsp;for&nbsp;instance&nbsp;variables</span></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><span class="code">list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object</span></dd>
+</dl>
+<hr>
+Data and other attributes inherited from sqlalchemy.orm.decl_api.Base:<br>
+<dl><dt><strong>__abstract__</strong> = True</dl>
+
+<dl><dt><strong>metadata</strong> = MetaData()</dl>
+
+<dl><dt><strong>registry</strong> = &lt;sqlalchemy.orm.decl_api.registry object&gt;</dl>
+
+</td></tr></table> <p>
+<table class="section">
+<tr class="decor title-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><a name="ConversationParticipant">class <strong>ConversationParticipant</strong></a>(sqlalchemy.orm.decl_api.Base)</td></tr>
+    
+<tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
+<td class="decor title-decor" colspan=2><span class="code"><a href="#ConversationParticipant">ConversationParticipant</a>(**kwargs)<br>
+&nbsp;<br>
+Participant&nbsp;mapping&nbsp;for&nbsp;a&nbsp;conversation.<br>&nbsp;</span></td></tr>
+<tr><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt>Method resolution order:</dt>
+<dd><a href="models.html#ConversationParticipant">ConversationParticipant</a></dd>
+<dd>sqlalchemy.orm.decl_api.Base</dd>
+<dd><a href="builtins.html#object">builtins.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="ConversationParticipant-__init__"><strong>__init__</strong></a>(self, **kwargs)<span class="grey"><span class="heading-text"> from sqlalchemy.orm.instrumentation</span></span></dt><dd><span class="code">A&nbsp;simple&nbsp;constructor&nbsp;that&nbsp;allows&nbsp;initialization&nbsp;from&nbsp;kwargs.<br>
+&nbsp;<br>
+Sets&nbsp;attributes&nbsp;on&nbsp;the&nbsp;constructed&nbsp;instance&nbsp;using&nbsp;the&nbsp;names&nbsp;and<br>
+values&nbsp;in&nbsp;``kwargs``.<br>
+&nbsp;<br>
+Only&nbsp;keys&nbsp;that&nbsp;are&nbsp;present&nbsp;as<br>
+attributes&nbsp;of&nbsp;the&nbsp;instance's&nbsp;class&nbsp;are&nbsp;allowed.&nbsp;These&nbsp;could&nbsp;be,<br>
+for&nbsp;example,&nbsp;any&nbsp;mapped&nbsp;columns&nbsp;or&nbsp;relationships.</span></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>conversation</strong></dt>
+</dl>
+<dl><dt><strong>conversation_id</strong></dt>
+</dl>
+<dl><dt><strong>joined_at</strong></dt>
+</dl>
+<dl><dt><strong>participant_id</strong></dt>
+</dl>
+<dl><dt><strong>user</strong></dt>
+</dl>
+<dl><dt><strong>user_id</strong></dt>
+</dl>
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>__mapper__</strong> = &lt;Mapper at 0x7efe9f2f6cd0; ConversationParticipant&gt;</dl>
+
+<dl><dt><strong>__table__</strong> = Table('conversation_participants', MetaData(), C...ipant.&lt;lambda&gt; at 0x7efe9f2dba60&gt;)), schema=None)</dl>
+
+<dl><dt><strong>__tablename__</strong> = 'conversation_participants'</dl>
+
+<hr>
+Data descriptors inherited from sqlalchemy.orm.decl_api.Base:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><span class="code">dictionary&nbsp;for&nbsp;instance&nbsp;variables</span></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><span class="code">list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object</span></dd>
+</dl>
+<hr>
+Data and other attributes inherited from sqlalchemy.orm.decl_api.Base:<br>
+<dl><dt><strong>__abstract__</strong> = True</dl>
+
+<dl><dt><strong>metadata</strong> = MetaData()</dl>
+
+<dl><dt><strong>registry</strong> = &lt;sqlalchemy.orm.decl_api.registry object&gt;</dl>
+
+</td></tr></table> <p>
+<table class="section">
+<tr class="decor title-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><a name="Course">class <strong>Course</strong></a>(sqlalchemy.orm.decl_api.Base)</td></tr>
+    
+<tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
+<td class="decor title-decor" colspan=2><span class="code"><a href="#Course">Course</a>(**kwargs)<br>
+&nbsp;<br>
+<a href="#Course">Course</a>&nbsp;workspace&nbsp;that&nbsp;groups&nbsp;users,&nbsp;posts,&nbsp;chat,&nbsp;and&nbsp;scheduling.<br>&nbsp;</span></td></tr>
+<tr><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt>Method resolution order:</dt>
+<dd><a href="models.html#Course">Course</a></dd>
+<dd>sqlalchemy.orm.decl_api.Base</dd>
+<dd><a href="builtins.html#object">builtins.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="Course-__init__"><strong>__init__</strong></a>(self, **kwargs)<span class="grey"><span class="heading-text"> from sqlalchemy.orm.instrumentation</span></span></dt><dd><span class="code">A&nbsp;simple&nbsp;constructor&nbsp;that&nbsp;allows&nbsp;initialization&nbsp;from&nbsp;kwargs.<br>
+&nbsp;<br>
+Sets&nbsp;attributes&nbsp;on&nbsp;the&nbsp;constructed&nbsp;instance&nbsp;using&nbsp;the&nbsp;names&nbsp;and<br>
+values&nbsp;in&nbsp;``kwargs``.<br>
+&nbsp;<br>
+Only&nbsp;keys&nbsp;that&nbsp;are&nbsp;present&nbsp;as<br>
+attributes&nbsp;of&nbsp;the&nbsp;instance's&nbsp;class&nbsp;are&nbsp;allowed.&nbsp;These&nbsp;could&nbsp;be,<br>
+for&nbsp;example,&nbsp;any&nbsp;mapped&nbsp;columns&nbsp;or&nbsp;relationships.</span></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>conversations</strong></dt>
+</dl>
+<dl><dt><strong>course_code</strong></dt>
+</dl>
+<dl><dt><strong>created_at</strong></dt>
+</dl>
+<dl><dt><strong>description</strong></dt>
+</dl>
+<dl><dt><strong>id</strong></dt>
+</dl>
+<dl><dt><strong>members</strong></dt>
+</dl>
+<dl><dt><strong>name</strong></dt>
+</dl>
+<dl><dt><strong>owner</strong></dt>
+</dl>
+<dl><dt><strong>owner_id</strong></dt>
+</dl>
+<dl><dt><strong>posts</strong></dt>
+</dl>
+<dl><dt><strong>study_groups</strong></dt>
+</dl>
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>__mapper__</strong> = &lt;Mapper at 0x7efe9f2ca010; Course&gt;</dl>
+
+<dl><dt><strong>__table__</strong> = Table('courses', MetaData(), Column('id', Intege...ourse.&lt;lambda&gt; at 0x7efe9f2afce0&gt;)), schema=None)</dl>
+
+<dl><dt><strong>__tablename__</strong> = 'courses'</dl>
+
+<hr>
+Data descriptors inherited from sqlalchemy.orm.decl_api.Base:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><span class="code">dictionary&nbsp;for&nbsp;instance&nbsp;variables</span></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><span class="code">list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object</span></dd>
+</dl>
+<hr>
+Data and other attributes inherited from sqlalchemy.orm.decl_api.Base:<br>
+<dl><dt><strong>__abstract__</strong> = True</dl>
+
+<dl><dt><strong>metadata</strong> = MetaData()</dl>
+
+<dl><dt><strong>registry</strong> = &lt;sqlalchemy.orm.decl_api.registry object&gt;</dl>
+
+</td></tr></table> <p>
+<table class="section">
+<tr class="decor title-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><a name="Enrollment">class <strong>Enrollment</strong></a>(sqlalchemy.orm.decl_api.Base)</td></tr>
+    
+<tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
+<td class="decor title-decor" colspan=2><span class="code"><a href="#Enrollment">Enrollment</a>(**kwargs)<br>
+&nbsp;<br>
+Membership&nbsp;record&nbsp;connecting&nbsp;one&nbsp;user&nbsp;to&nbsp;one&nbsp;course.<br>&nbsp;</span></td></tr>
+<tr><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt>Method resolution order:</dt>
+<dd><a href="models.html#Enrollment">Enrollment</a></dd>
+<dd>sqlalchemy.orm.decl_api.Base</dd>
+<dd><a href="builtins.html#object">builtins.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="Enrollment-__init__"><strong>__init__</strong></a>(self, **kwargs)<span class="grey"><span class="heading-text"> from sqlalchemy.orm.instrumentation</span></span></dt><dd><span class="code">A&nbsp;simple&nbsp;constructor&nbsp;that&nbsp;allows&nbsp;initialization&nbsp;from&nbsp;kwargs.<br>
+&nbsp;<br>
+Sets&nbsp;attributes&nbsp;on&nbsp;the&nbsp;constructed&nbsp;instance&nbsp;using&nbsp;the&nbsp;names&nbsp;and<br>
+values&nbsp;in&nbsp;``kwargs``.<br>
+&nbsp;<br>
+Only&nbsp;keys&nbsp;that&nbsp;are&nbsp;present&nbsp;as<br>
+attributes&nbsp;of&nbsp;the&nbsp;instance's&nbsp;class&nbsp;are&nbsp;allowed.&nbsp;These&nbsp;could&nbsp;be,<br>
+for&nbsp;example,&nbsp;any&nbsp;mapped&nbsp;columns&nbsp;or&nbsp;relationships.</span></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>course</strong></dt>
+</dl>
+<dl><dt><strong>course_id</strong></dt>
+</dl>
+<dl><dt><strong>enrolled_at</strong></dt>
+</dl>
+<dl><dt><strong>id</strong></dt>
+</dl>
+<dl><dt><strong>user</strong></dt>
+</dl>
+<dl><dt><strong>user_id</strong></dt>
+</dl>
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>__mapper__</strong> = &lt;Mapper at 0x7efe9f2e5050; Enrollment&gt;</dl>
+
+<dl><dt><strong>__table__</strong> = Table('enrollments', MetaData(), Column('id', In...lment.&lt;lambda&gt; at 0x7efe9f2d9300&gt;)), schema=None)</dl>
+
+<dl><dt><strong>__tablename__</strong> = 'enrollments'</dl>
+
+<hr>
+Data descriptors inherited from sqlalchemy.orm.decl_api.Base:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><span class="code">dictionary&nbsp;for&nbsp;instance&nbsp;variables</span></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><span class="code">list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object</span></dd>
+</dl>
+<hr>
+Data and other attributes inherited from sqlalchemy.orm.decl_api.Base:<br>
+<dl><dt><strong>__abstract__</strong> = True</dl>
+
+<dl><dt><strong>metadata</strong> = MetaData()</dl>
+
+<dl><dt><strong>registry</strong> = &lt;sqlalchemy.orm.decl_api.registry object&gt;</dl>
+
+</td></tr></table> <p>
+<table class="section">
+<tr class="decor title-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><a name="Message">class <strong>Message</strong></a>(sqlalchemy.orm.decl_api.Base)</td></tr>
+    
+<tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
+<td class="decor title-decor" colspan=2><span class="code"><a href="#Message">Message</a>(**kwargs)<br>
+&nbsp;<br>
+Single&nbsp;chat&nbsp;message&nbsp;stored&nbsp;within&nbsp;a&nbsp;conversation.<br>&nbsp;</span></td></tr>
+<tr><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt>Method resolution order:</dt>
+<dd><a href="models.html#Message">Message</a></dd>
+<dd>sqlalchemy.orm.decl_api.Base</dd>
+<dd><a href="builtins.html#object">builtins.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="Message-__init__"><strong>__init__</strong></a>(self, **kwargs)<span class="grey"><span class="heading-text"> from sqlalchemy.orm.instrumentation</span></span></dt><dd><span class="code">A&nbsp;simple&nbsp;constructor&nbsp;that&nbsp;allows&nbsp;initialization&nbsp;from&nbsp;kwargs.<br>
+&nbsp;<br>
+Sets&nbsp;attributes&nbsp;on&nbsp;the&nbsp;constructed&nbsp;instance&nbsp;using&nbsp;the&nbsp;names&nbsp;and<br>
+values&nbsp;in&nbsp;``kwargs``.<br>
+&nbsp;<br>
+Only&nbsp;keys&nbsp;that&nbsp;are&nbsp;present&nbsp;as<br>
+attributes&nbsp;of&nbsp;the&nbsp;instance's&nbsp;class&nbsp;are&nbsp;allowed.&nbsp;These&nbsp;could&nbsp;be,<br>
+for&nbsp;example,&nbsp;any&nbsp;mapped&nbsp;columns&nbsp;or&nbsp;relationships.</span></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>content</strong></dt>
+</dl>
+<dl><dt><strong>conversation</strong></dt>
+</dl>
+<dl><dt><strong>conversation_id</strong></dt>
+</dl>
+<dl><dt><strong>created_at</strong></dt>
+</dl>
+<dl><dt><strong>message_id</strong></dt>
+</dl>
+<dl><dt><strong>sender</strong></dt>
+</dl>
+<dl><dt><strong>sender_id</strong></dt>
+</dl>
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>__mapper__</strong> = &lt;Mapper at 0x7efe9f309990; Message&gt;</dl>
+
+<dl><dt><strong>__table__</strong> = Table('messages', MetaData(), Column('id', Integ...ssage.&lt;lambda&gt; at 0x7efe9f304cc0&gt;)), schema=None)</dl>
+
+<dl><dt><strong>__tablename__</strong> = 'messages'</dl>
+
+<hr>
+Data descriptors inherited from sqlalchemy.orm.decl_api.Base:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><span class="code">dictionary&nbsp;for&nbsp;instance&nbsp;variables</span></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><span class="code">list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object</span></dd>
+</dl>
+<hr>
+Data and other attributes inherited from sqlalchemy.orm.decl_api.Base:<br>
+<dl><dt><strong>__abstract__</strong> = True</dl>
+
+<dl><dt><strong>metadata</strong> = MetaData()</dl>
+
+<dl><dt><strong>registry</strong> = &lt;sqlalchemy.orm.decl_api.registry object&gt;</dl>
+
+</td></tr></table> <p>
+<table class="section">
+<tr class="decor title-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><a name="Post">class <strong>Post</strong></a>(sqlalchemy.orm.decl_api.Base)</td></tr>
+    
+<tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
+<td class="decor title-decor" colspan=2><span class="code"><a href="#Post">Post</a>(**kwargs)<br>
+&nbsp;<br>
+Shared&nbsp;course&nbsp;resource&nbsp;post&nbsp;with&nbsp;optional&nbsp;moderation&nbsp;state.<br>&nbsp;</span></td></tr>
+<tr><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt>Method resolution order:</dt>
+<dd><a href="models.html#Post">Post</a></dd>
+<dd>sqlalchemy.orm.decl_api.Base</dd>
+<dd><a href="builtins.html#object">builtins.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="Post-__init__"><strong>__init__</strong></a>(self, **kwargs)<span class="grey"><span class="heading-text"> from sqlalchemy.orm.instrumentation</span></span></dt><dd><span class="code">A&nbsp;simple&nbsp;constructor&nbsp;that&nbsp;allows&nbsp;initialization&nbsp;from&nbsp;kwargs.<br>
+&nbsp;<br>
+Sets&nbsp;attributes&nbsp;on&nbsp;the&nbsp;constructed&nbsp;instance&nbsp;using&nbsp;the&nbsp;names&nbsp;and<br>
+values&nbsp;in&nbsp;``kwargs``.<br>
+&nbsp;<br>
+Only&nbsp;keys&nbsp;that&nbsp;are&nbsp;present&nbsp;as<br>
+attributes&nbsp;of&nbsp;the&nbsp;instance's&nbsp;class&nbsp;are&nbsp;allowed.&nbsp;These&nbsp;could&nbsp;be,<br>
+for&nbsp;example,&nbsp;any&nbsp;mapped&nbsp;columns&nbsp;or&nbsp;relationships.</span></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>author</strong></dt>
+</dl>
+<dl><dt><strong>author_uid</strong></dt>
+</dl>
+<dl><dt><strong>course</strong></dt>
+</dl>
+<dl><dt><strong>course_id</strong></dt>
+</dl>
+<dl><dt><strong>created_at</strong></dt>
+</dl>
+<dl><dt><strong>description</strong></dt>
+</dl>
+<dl><dt><strong>id</strong></dt>
+</dl>
+<dl><dt><strong>is_flagged</strong></dt>
+</dl>
+<dl><dt><strong>resource_link</strong></dt>
+</dl>
+<dl><dt><strong>score</strong></dt>
+</dl>
+<dl><dt><strong>title</strong></dt>
+</dl>
+<dl><dt><strong>votes</strong></dt>
+</dl>
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>__mapper__</strong> = &lt;Mapper at 0x7efe9f3155d0; Post&gt;</dl>
+
+<dl><dt><strong>__table__</strong> = Table('posts', MetaData(), Column('id', Integer(... Post.&lt;lambda&gt; at 0x7efe9f305ee0&gt;)), schema=None)</dl>
+
+<dl><dt><strong>__tablename__</strong> = 'posts'</dl>
+
+<hr>
+Data descriptors inherited from sqlalchemy.orm.decl_api.Base:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><span class="code">dictionary&nbsp;for&nbsp;instance&nbsp;variables</span></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><span class="code">list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object</span></dd>
+</dl>
+<hr>
+Data and other attributes inherited from sqlalchemy.orm.decl_api.Base:<br>
+<dl><dt><strong>__abstract__</strong> = True</dl>
+
+<dl><dt><strong>metadata</strong> = MetaData()</dl>
+
+<dl><dt><strong>registry</strong> = &lt;sqlalchemy.orm.decl_api.registry object&gt;</dl>
+
+</td></tr></table> <p>
+<table class="section">
+<tr class="decor title-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><a name="PostVote">class <strong>PostVote</strong></a>(sqlalchemy.orm.decl_api.Base)</td></tr>
+    
+<tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
+<td class="decor title-decor" colspan=2><span class="code"><a href="#PostVote">PostVote</a>(**kwargs)<br>
+&nbsp;<br>
+Per-user&nbsp;vote&nbsp;attached&nbsp;to&nbsp;a&nbsp;resource&nbsp;post.<br>&nbsp;</span></td></tr>
+<tr><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt>Method resolution order:</dt>
+<dd><a href="models.html#PostVote">PostVote</a></dd>
+<dd>sqlalchemy.orm.decl_api.Base</dd>
+<dd><a href="builtins.html#object">builtins.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="PostVote-__init__"><strong>__init__</strong></a>(self, **kwargs)<span class="grey"><span class="heading-text"> from sqlalchemy.orm.instrumentation</span></span></dt><dd><span class="code">A&nbsp;simple&nbsp;constructor&nbsp;that&nbsp;allows&nbsp;initialization&nbsp;from&nbsp;kwargs.<br>
+&nbsp;<br>
+Sets&nbsp;attributes&nbsp;on&nbsp;the&nbsp;constructed&nbsp;instance&nbsp;using&nbsp;the&nbsp;names&nbsp;and<br>
+values&nbsp;in&nbsp;``kwargs``.<br>
+&nbsp;<br>
+Only&nbsp;keys&nbsp;that&nbsp;are&nbsp;present&nbsp;as<br>
+attributes&nbsp;of&nbsp;the&nbsp;instance's&nbsp;class&nbsp;are&nbsp;allowed.&nbsp;These&nbsp;could&nbsp;be,<br>
+for&nbsp;example,&nbsp;any&nbsp;mapped&nbsp;columns&nbsp;or&nbsp;relationships.</span></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>id</strong></dt>
+</dl>
+<dl><dt><strong>post</strong></dt>
+</dl>
+<dl><dt><strong>post_id</strong></dt>
+</dl>
+<dl><dt><strong>user_uid</strong></dt>
+</dl>
+<dl><dt><strong>vote</strong></dt>
+</dl>
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>__mapper__</strong> = &lt;Mapper at 0x7efe9f324990; PostVote&gt;</dl>
+
+<dl><dt><strong>__table__</strong> = Table('post_votes', MetaData(), Column('id', Int...table=&lt;post_votes&gt;, nullable=False), schema=None)</dl>
+
+<dl><dt><strong>__tablename__</strong> = 'post_votes'</dl>
+
+<hr>
+Data descriptors inherited from sqlalchemy.orm.decl_api.Base:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><span class="code">dictionary&nbsp;for&nbsp;instance&nbsp;variables</span></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><span class="code">list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object</span></dd>
+</dl>
+<hr>
+Data and other attributes inherited from sqlalchemy.orm.decl_api.Base:<br>
+<dl><dt><strong>__abstract__</strong> = True</dl>
+
+<dl><dt><strong>metadata</strong> = MetaData()</dl>
+
+<dl><dt><strong>registry</strong> = &lt;sqlalchemy.orm.decl_api.registry object&gt;</dl>
+
+</td></tr></table> <p>
+<table class="section">
+<tr class="decor title-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><a name="StudyGroup">class <strong>StudyGroup</strong></a>(sqlalchemy.orm.decl_api.Base)</td></tr>
+    
+<tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
+<td class="decor title-decor" colspan=2><span class="code"><a href="#StudyGroup">StudyGroup</a>(**kwargs)<br>
+&nbsp;<br>
+Small&nbsp;study&nbsp;team&nbsp;created&nbsp;inside&nbsp;a&nbsp;course.<br>&nbsp;</span></td></tr>
+<tr><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt>Method resolution order:</dt>
+<dd><a href="models.html#StudyGroup">StudyGroup</a></dd>
+<dd>sqlalchemy.orm.decl_api.Base</dd>
+<dd><a href="builtins.html#object">builtins.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="StudyGroup-__init__"><strong>__init__</strong></a>(self, **kwargs)<span class="grey"><span class="heading-text"> from sqlalchemy.orm.instrumentation</span></span></dt><dd><span class="code">A&nbsp;simple&nbsp;constructor&nbsp;that&nbsp;allows&nbsp;initialization&nbsp;from&nbsp;kwargs.<br>
+&nbsp;<br>
+Sets&nbsp;attributes&nbsp;on&nbsp;the&nbsp;constructed&nbsp;instance&nbsp;using&nbsp;the&nbsp;names&nbsp;and<br>
+values&nbsp;in&nbsp;``kwargs``.<br>
+&nbsp;<br>
+Only&nbsp;keys&nbsp;that&nbsp;are&nbsp;present&nbsp;as<br>
+attributes&nbsp;of&nbsp;the&nbsp;instance's&nbsp;class&nbsp;are&nbsp;allowed.&nbsp;These&nbsp;could&nbsp;be,<br>
+for&nbsp;example,&nbsp;any&nbsp;mapped&nbsp;columns&nbsp;or&nbsp;relationships.</span></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>course</strong></dt>
+</dl>
+<dl><dt><strong>course_id</strong></dt>
+</dl>
+<dl><dt><strong>created_at</strong></dt>
+</dl>
+<dl><dt><strong>id</strong></dt>
+</dl>
+<dl><dt><strong>members</strong></dt>
+</dl>
+<dl><dt><strong>name</strong></dt>
+</dl>
+<dl><dt><strong>sessions</strong></dt>
+</dl>
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>__mapper__</strong> = &lt;Mapper at 0x7efe9f327490; StudyGroup&gt;</dl>
+
+<dl><dt><strong>__table__</strong> = Table('study_groups', MetaData(), Column('id', I...Group.&lt;lambda&gt; at 0x7efe9f328040&gt;)), schema=None)</dl>
+
+<dl><dt><strong>__tablename__</strong> = 'study_groups'</dl>
+
+<hr>
+Data descriptors inherited from sqlalchemy.orm.decl_api.Base:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><span class="code">dictionary&nbsp;for&nbsp;instance&nbsp;variables</span></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><span class="code">list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object</span></dd>
+</dl>
+<hr>
+Data and other attributes inherited from sqlalchemy.orm.decl_api.Base:<br>
+<dl><dt><strong>__abstract__</strong> = True</dl>
+
+<dl><dt><strong>metadata</strong> = MetaData()</dl>
+
+<dl><dt><strong>registry</strong> = &lt;sqlalchemy.orm.decl_api.registry object&gt;</dl>
+
+</td></tr></table> <p>
+<table class="section">
+<tr class="decor title-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><a name="StudyGroupMember">class <strong>StudyGroupMember</strong></a>(sqlalchemy.orm.decl_api.Base)</td></tr>
+    
+<tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
+<td class="decor title-decor" colspan=2><span class="code"><a href="#StudyGroupMember">StudyGroupMember</a>(**kwargs)<br>
+&nbsp;<br>
+Membership&nbsp;record&nbsp;connecting&nbsp;a&nbsp;user&nbsp;email&nbsp;to&nbsp;a&nbsp;study&nbsp;group.<br>&nbsp;</span></td></tr>
+<tr><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt>Method resolution order:</dt>
+<dd><a href="models.html#StudyGroupMember">StudyGroupMember</a></dd>
+<dd>sqlalchemy.orm.decl_api.Base</dd>
+<dd><a href="builtins.html#object">builtins.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="StudyGroupMember-__init__"><strong>__init__</strong></a>(self, **kwargs)<span class="grey"><span class="heading-text"> from sqlalchemy.orm.instrumentation</span></span></dt><dd><span class="code">A&nbsp;simple&nbsp;constructor&nbsp;that&nbsp;allows&nbsp;initialization&nbsp;from&nbsp;kwargs.<br>
+&nbsp;<br>
+Sets&nbsp;attributes&nbsp;on&nbsp;the&nbsp;constructed&nbsp;instance&nbsp;using&nbsp;the&nbsp;names&nbsp;and<br>
+values&nbsp;in&nbsp;``kwargs``.<br>
+&nbsp;<br>
+Only&nbsp;keys&nbsp;that&nbsp;are&nbsp;present&nbsp;as<br>
+attributes&nbsp;of&nbsp;the&nbsp;instance's&nbsp;class&nbsp;are&nbsp;allowed.&nbsp;These&nbsp;could&nbsp;be,<br>
+for&nbsp;example,&nbsp;any&nbsp;mapped&nbsp;columns&nbsp;or&nbsp;relationships.</span></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>group</strong></dt>
+</dl>
+<dl><dt><strong>group_id</strong></dt>
+</dl>
+<dl><dt><strong>id</strong></dt>
+</dl>
+<dl><dt><strong>joined_at</strong></dt>
+</dl>
+<dl><dt><strong>user_email</strong></dt>
+</dl>
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>__mapper__</strong> = &lt;Mapper at 0x7efe9f349a90; StudyGroupMember&gt;</dl>
+
+<dl><dt><strong>__table__</strong> = Table('study_group_members', MetaData(), Column(...ember.&lt;lambda&gt; at 0x7efe9f32a520&gt;)), schema=None)</dl>
+
+<dl><dt><strong>__tablename__</strong> = 'study_group_members'</dl>
+
+<hr>
+Data descriptors inherited from sqlalchemy.orm.decl_api.Base:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><span class="code">dictionary&nbsp;for&nbsp;instance&nbsp;variables</span></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><span class="code">list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object</span></dd>
+</dl>
+<hr>
+Data and other attributes inherited from sqlalchemy.orm.decl_api.Base:<br>
+<dl><dt><strong>__abstract__</strong> = True</dl>
+
+<dl><dt><strong>metadata</strong> = MetaData()</dl>
+
+<dl><dt><strong>registry</strong> = &lt;sqlalchemy.orm.decl_api.registry object&gt;</dl>
+
+</td></tr></table> <p>
+<table class="section">
+<tr class="decor title-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><a name="StudySession">class <strong>StudySession</strong></a>(sqlalchemy.orm.decl_api.Base)</td></tr>
+    
+<tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
+<td class="decor title-decor" colspan=2><span class="code"><a href="#StudySession">StudySession</a>(**kwargs)<br>
+&nbsp;<br>
+Scheduled&nbsp;study&nbsp;meeting&nbsp;for&nbsp;an&nbsp;individual&nbsp;or&nbsp;a&nbsp;group.<br>&nbsp;</span></td></tr>
+<tr><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt>Method resolution order:</dt>
+<dd><a href="models.html#StudySession">StudySession</a></dd>
+<dd>sqlalchemy.orm.decl_api.Base</dd>
+<dd><a href="builtins.html#object">builtins.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="StudySession-__init__"><strong>__init__</strong></a>(self, **kwargs)<span class="grey"><span class="heading-text"> from sqlalchemy.orm.instrumentation</span></span></dt><dd><span class="code">A&nbsp;simple&nbsp;constructor&nbsp;that&nbsp;allows&nbsp;initialization&nbsp;from&nbsp;kwargs.<br>
+&nbsp;<br>
+Sets&nbsp;attributes&nbsp;on&nbsp;the&nbsp;constructed&nbsp;instance&nbsp;using&nbsp;the&nbsp;names&nbsp;and<br>
+values&nbsp;in&nbsp;``kwargs``.<br>
+&nbsp;<br>
+Only&nbsp;keys&nbsp;that&nbsp;are&nbsp;present&nbsp;as<br>
+attributes&nbsp;of&nbsp;the&nbsp;instance's&nbsp;class&nbsp;are&nbsp;allowed.&nbsp;These&nbsp;could&nbsp;be,<br>
+for&nbsp;example,&nbsp;any&nbsp;mapped&nbsp;columns&nbsp;or&nbsp;relationships.</span></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>course_id</strong></dt>
+</dl>
+<dl><dt><strong>created_at</strong></dt>
+</dl>
+<dl><dt><strong>creator_email</strong></dt>
+</dl>
+<dl><dt><strong>ends_at</strong></dt>
+</dl>
+<dl><dt><strong>group</strong></dt>
+</dl>
+<dl><dt><strong>group_id</strong></dt>
+</dl>
+<dl><dt><strong>id</strong></dt>
+</dl>
+<dl><dt><strong>invitees</strong></dt>
+</dl>
+<dl><dt><strong>session_type</strong></dt>
+</dl>
+<dl><dt><strong>starts_at</strong></dt>
+</dl>
+<dl><dt><strong>title</strong></dt>
+</dl>
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>__mapper__</strong> = &lt;Mapper at 0x7efe9f33a610; StudySession&gt;</dl>
+
+<dl><dt><strong>__table__</strong> = Table('study_sessions', MetaData(), Column('id',...ssion.&lt;lambda&gt; at 0x7efe9f329260&gt;)), schema=None)</dl>
+
+<dl><dt><strong>__tablename__</strong> = 'study_sessions'</dl>
+
+<hr>
+Data descriptors inherited from sqlalchemy.orm.decl_api.Base:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><span class="code">dictionary&nbsp;for&nbsp;instance&nbsp;variables</span></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><span class="code">list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object</span></dd>
+</dl>
+<hr>
+Data and other attributes inherited from sqlalchemy.orm.decl_api.Base:<br>
+<dl><dt><strong>__abstract__</strong> = True</dl>
+
+<dl><dt><strong>metadata</strong> = MetaData()</dl>
+
+<dl><dt><strong>registry</strong> = &lt;sqlalchemy.orm.decl_api.registry object&gt;</dl>
+
+</td></tr></table> <p>
+<table class="section">
+<tr class="decor title-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><a name="StudySessionInvitee">class <strong>StudySessionInvitee</strong></a>(sqlalchemy.orm.decl_api.Base)</td></tr>
+    
+<tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
+<td class="decor title-decor" colspan=2><span class="code"><a href="#StudySessionInvitee">StudySessionInvitee</a>(**kwargs)<br>
+&nbsp;<br>
+Email&nbsp;invitee&nbsp;attached&nbsp;to&nbsp;a&nbsp;scheduled&nbsp;study&nbsp;session.<br>&nbsp;</span></td></tr>
+<tr><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt>Method resolution order:</dt>
+<dd><a href="models.html#StudySessionInvitee">StudySessionInvitee</a></dd>
+<dd>sqlalchemy.orm.decl_api.Base</dd>
+<dd><a href="builtins.html#object">builtins.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="StudySessionInvitee-__init__"><strong>__init__</strong></a>(self, **kwargs)<span class="grey"><span class="heading-text"> from sqlalchemy.orm.instrumentation</span></span></dt><dd><span class="code">A&nbsp;simple&nbsp;constructor&nbsp;that&nbsp;allows&nbsp;initialization&nbsp;from&nbsp;kwargs.<br>
+&nbsp;<br>
+Sets&nbsp;attributes&nbsp;on&nbsp;the&nbsp;constructed&nbsp;instance&nbsp;using&nbsp;the&nbsp;names&nbsp;and<br>
+values&nbsp;in&nbsp;``kwargs``.<br>
+&nbsp;<br>
+Only&nbsp;keys&nbsp;that&nbsp;are&nbsp;present&nbsp;as<br>
+attributes&nbsp;of&nbsp;the&nbsp;instance's&nbsp;class&nbsp;are&nbsp;allowed.&nbsp;These&nbsp;could&nbsp;be,<br>
+for&nbsp;example,&nbsp;any&nbsp;mapped&nbsp;columns&nbsp;or&nbsp;relationships.</span></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>created_at</strong></dt>
+</dl>
+<dl><dt><strong>id</strong></dt>
+</dl>
+<dl><dt><strong>session</strong></dt>
+</dl>
+<dl><dt><strong>study_session_id</strong></dt>
+</dl>
+<dl><dt><strong>user_email</strong></dt>
+</dl>
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>__mapper__</strong> = &lt;Mapper at 0x7efe9ec27110; StudySessionInvitee&gt;</dl>
+
+<dl><dt><strong>__table__</strong> = Table('study_session_invitees', MetaData(), Colu...vitee.&lt;lambda&gt; at 0x7efe9ec34400&gt;)), schema=None)</dl>
+
+<dl><dt><strong>__tablename__</strong> = 'study_session_invitees'</dl>
+
+<hr>
+Data descriptors inherited from sqlalchemy.orm.decl_api.Base:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><span class="code">dictionary&nbsp;for&nbsp;instance&nbsp;variables</span></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><span class="code">list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object</span></dd>
+</dl>
+<hr>
+Data and other attributes inherited from sqlalchemy.orm.decl_api.Base:<br>
+<dl><dt><strong>__abstract__</strong> = True</dl>
+
+<dl><dt><strong>metadata</strong> = MetaData()</dl>
+
+<dl><dt><strong>registry</strong> = &lt;sqlalchemy.orm.decl_api.registry object&gt;</dl>
+
+</td></tr></table> <p>
+<table class="section">
+<tr class="decor title-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><a name="User">class <strong>User</strong></a>(sqlalchemy.orm.decl_api.Base)</td></tr>
+    
+<tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
+<td class="decor title-decor" colspan=2><span class="code"><a href="#User">User</a>(**kwargs)<br>
+&nbsp;<br>
+Application&nbsp;user&nbsp;synchronized&nbsp;from&nbsp;Firebase&nbsp;authentication.<br>&nbsp;</span></td></tr>
+<tr><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt>Method resolution order:</dt>
+<dd><a href="models.html#User">User</a></dd>
+<dd>sqlalchemy.orm.decl_api.Base</dd>
+<dd><a href="builtins.html#object">builtins.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="User-__init__"><strong>__init__</strong></a>(self, **kwargs)<span class="grey"><span class="heading-text"> from sqlalchemy.orm.instrumentation</span></span></dt><dd><span class="code">A&nbsp;simple&nbsp;constructor&nbsp;that&nbsp;allows&nbsp;initialization&nbsp;from&nbsp;kwargs.<br>
+&nbsp;<br>
+Sets&nbsp;attributes&nbsp;on&nbsp;the&nbsp;constructed&nbsp;instance&nbsp;using&nbsp;the&nbsp;names&nbsp;and<br>
+values&nbsp;in&nbsp;``kwargs``.<br>
+&nbsp;<br>
+Only&nbsp;keys&nbsp;that&nbsp;are&nbsp;present&nbsp;as<br>
+attributes&nbsp;of&nbsp;the&nbsp;instance's&nbsp;class&nbsp;are&nbsp;allowed.&nbsp;These&nbsp;could&nbsp;be,<br>
+for&nbsp;example,&nbsp;any&nbsp;mapped&nbsp;columns&nbsp;or&nbsp;relationships.</span></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>conversation_participants</strong></dt>
+</dl>
+<dl><dt><strong>courses_created</strong></dt>
+</dl>
+<dl><dt><strong>created_at</strong></dt>
+</dl>
+<dl><dt><strong>email</strong></dt>
+</dl>
+<dl><dt><strong>enrollments</strong></dt>
+</dl>
+<dl><dt><strong>firebase_uid</strong></dt>
+</dl>
+<dl><dt><strong>full_name</strong></dt>
+</dl>
+<dl><dt><strong>google_calendar_token</strong></dt>
+</dl>
+<dl><dt><strong>messages</strong></dt>
+</dl>
+<dl><dt><strong>posts</strong></dt>
+</dl>
+<dl><dt><strong>role</strong></dt>
+</dl>
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>__mapper__</strong> = &lt;Mapper at 0x7efe9f2b9dd0; User&gt;</dl>
+
+<dl><dt><strong>__table__</strong> = Table('users', MetaData(), Column('firebase_uid'... User.&lt;lambda&gt; at 0x7efe9f2ada80&gt;)), schema=None)</dl>
+
+<dl><dt><strong>__tablename__</strong> = 'users'</dl>
+
+<hr>
+Data descriptors inherited from sqlalchemy.orm.decl_api.Base:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><span class="code">dictionary&nbsp;for&nbsp;instance&nbsp;variables</span></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><span class="code">list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object</span></dd>
+</dl>
+<hr>
+Data and other attributes inherited from sqlalchemy.orm.decl_api.Base:<br>
+<dl><dt><strong>__abstract__</strong> = True</dl>
+
+<dl><dt><strong>metadata</strong> = MetaData()</dl>
+
+<dl><dt><strong>registry</strong> = &lt;sqlalchemy.orm.decl_api.registry object&gt;</dl>
+
+</td></tr></table> <p>
+<table class="section">
+<tr class="decor title-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><a name="UserAvailability">class <strong>UserAvailability</strong></a>(sqlalchemy.orm.decl_api.Base)</td></tr>
+    
+<tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
+<td class="decor title-decor" colspan=2><span class="code"><a href="#UserAvailability">UserAvailability</a>(**kwargs)<br>
+&nbsp;<br>
+Busy-time&nbsp;block&nbsp;imported&nbsp;from&nbsp;Google&nbsp;Calendar&nbsp;or&nbsp;local&nbsp;scheduling&nbsp;data.<br>&nbsp;</span></td></tr>
+<tr><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt>Method resolution order:</dt>
+<dd><a href="models.html#UserAvailability">UserAvailability</a></dd>
+<dd>sqlalchemy.orm.decl_api.Base</dd>
+<dd><a href="builtins.html#object">builtins.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="UserAvailability-__init__"><strong>__init__</strong></a>(self, **kwargs)<span class="grey"><span class="heading-text"> from sqlalchemy.orm.instrumentation</span></span></dt><dd><span class="code">A&nbsp;simple&nbsp;constructor&nbsp;that&nbsp;allows&nbsp;initialization&nbsp;from&nbsp;kwargs.<br>
+&nbsp;<br>
+Sets&nbsp;attributes&nbsp;on&nbsp;the&nbsp;constructed&nbsp;instance&nbsp;using&nbsp;the&nbsp;names&nbsp;and<br>
+values&nbsp;in&nbsp;``kwargs``.<br>
+&nbsp;<br>
+Only&nbsp;keys&nbsp;that&nbsp;are&nbsp;present&nbsp;as<br>
+attributes&nbsp;of&nbsp;the&nbsp;instance's&nbsp;class&nbsp;are&nbsp;allowed.&nbsp;These&nbsp;could&nbsp;be,<br>
+for&nbsp;example,&nbsp;any&nbsp;mapped&nbsp;columns&nbsp;or&nbsp;relationships.</span></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>created_at</strong></dt>
+</dl>
+<dl><dt><strong>ends_at</strong></dt>
+</dl>
+<dl><dt><strong>id</strong></dt>
+</dl>
+<dl><dt><strong>source</strong></dt>
+</dl>
+<dl><dt><strong>starts_at</strong></dt>
+</dl>
+<dl><dt><strong>study_session_id</strong></dt>
+</dl>
+<dl><dt><strong>user_email</strong></dt>
+</dl>
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>__mapper__</strong> = &lt;Mapper at 0x7efe9ec24050; UserAvailability&gt;</dl>
+
+<dl><dt><strong>__table__</strong> = Table('user_availability', MetaData(), Column('i...ility.&lt;lambda&gt; at 0x7efe9f32b420&gt;)), schema=None)</dl>
+
+<dl><dt><strong>__tablename__</strong> = 'user_availability'</dl>
+
+<hr>
+Data descriptors inherited from sqlalchemy.orm.decl_api.Base:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><span class="code">dictionary&nbsp;for&nbsp;instance&nbsp;variables</span></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><span class="code">list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object</span></dd>
+</dl>
+<hr>
+Data and other attributes inherited from sqlalchemy.orm.decl_api.Base:<br>
+<dl><dt><strong>__abstract__</strong> = True</dl>
+
+<dl><dt><strong>metadata</strong> = MetaData()</dl>
+
+<dl><dt><strong>registry</strong> = &lt;sqlalchemy.orm.decl_api.registry object&gt;</dl>
+
+</td></tr></table> <p>
+<table class="section">
+<tr class="decor title-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><a name="UserRole">class <strong>UserRole</strong></a>(<a href="builtins.html#str">builtins.str</a>, <a href="enum.html#Enum">enum.Enum</a>)</td></tr>
+    
+<tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
+<td class="decor title-decor" colspan=2><span class="code"><a href="#UserRole">UserRole</a>(value,&nbsp;names=None,&nbsp;*,&nbsp;module=None,&nbsp;qualname=None,&nbsp;type=None,&nbsp;start=1,&nbsp;boundary=None)<br>
+&nbsp;<br>
+Supported&nbsp;application&nbsp;roles&nbsp;used&nbsp;for&nbsp;authorization&nbsp;decisions.<br>&nbsp;</span></td></tr>
+<tr><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt>Method resolution order:</dt>
+<dd><a href="models.html#UserRole">UserRole</a></dd>
+<dd><a href="builtins.html#str">builtins.str</a></dd>
+<dd><a href="enum.html#Enum">enum.Enum</a></dd>
+<dd><a href="builtins.html#object">builtins.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="UserRole-__format__"><strong>__format__</strong></a>(self, format_spec)<span class="grey"><span class="heading-text"> from enum.Enum</span></span></dt><dd><span class="code">Default&nbsp;object&nbsp;formatter.</span></dd></dl>
+
+<dl><dt><a name="UserRole-__new__"><strong>__new__</strong></a>(cls, value)<span class="grey"><span class="heading-text"> from enum.Enum</span></span></dt><dd><span class="code">Create&nbsp;and&nbsp;return&nbsp;a&nbsp;new&nbsp;object.&nbsp;&nbsp;See&nbsp;help(type)&nbsp;for&nbsp;accurate&nbsp;signature.</span></dd></dl>
+
+<dl><dt><a name="UserRole-__repr__"><strong>__repr__</strong></a>(self)<span class="grey"><span class="heading-text"> from enum.Enum</span></span></dt><dd><span class="code">Return&nbsp;repr(self).</span></dd></dl>
+
+<dl><dt><a name="UserRole-__str__"><strong>__str__</strong></a>(self)<span class="grey"><span class="heading-text"> from enum.Enum</span></span></dt><dd><span class="code">Return&nbsp;<a href="builtins.html#str">str</a>(self).</span></dd></dl>
+
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>ADMIN</strong> = &lt;UserRole.ADMIN: 'Admin'&gt;</dl>
+
+<dl><dt><strong>STUDENT</strong> = &lt;UserRole.STUDENT: 'Student'&gt;</dl>
+
+<dl><dt><strong>TA</strong> = &lt;UserRole.TA: 'TA'&gt;</dl>
+
+<hr>
+Methods inherited from <a href="builtins.html#str">builtins.str</a>:<br>
+<dl><dt><a name="UserRole-__add__"><strong>__add__</strong></a>(self, value, /)</dt><dd><span class="code">Return&nbsp;self+value.</span></dd></dl>
+
+<dl><dt><a name="UserRole-__contains__"><strong>__contains__</strong></a>(self, key, /)</dt><dd><span class="code">Return&nbsp;key&nbsp;in&nbsp;self.</span></dd></dl>
+
+<dl><dt><a name="UserRole-__eq__"><strong>__eq__</strong></a>(self, value, /)</dt><dd><span class="code">Return&nbsp;self==value.</span></dd></dl>
+
+<dl><dt><a name="UserRole-__ge__"><strong>__ge__</strong></a>(self, value, /)</dt><dd><span class="code">Return&nbsp;self&gt;=value.</span></dd></dl>
+
+<dl><dt><a name="UserRole-__getattribute__"><strong>__getattribute__</strong></a>(self, name, /)</dt><dd><span class="code">Return&nbsp;getattr(self,&nbsp;name).</span></dd></dl>
+
+<dl><dt><a name="UserRole-__getitem__"><strong>__getitem__</strong></a>(self, key, /)</dt><dd><span class="code">Return&nbsp;self[key].</span></dd></dl>
+
+<dl><dt><a name="UserRole-__getnewargs__"><strong>__getnewargs__</strong></a>(...)</dt></dl>
+
+<dl><dt><a name="UserRole-__gt__"><strong>__gt__</strong></a>(self, value, /)</dt><dd><span class="code">Return&nbsp;self&gt;value.</span></dd></dl>
+
+<dl><dt><a name="UserRole-__hash__"><strong>__hash__</strong></a>(self, /)</dt><dd><span class="code">Return&nbsp;hash(self).</span></dd></dl>
+
+<dl><dt><a name="UserRole-__iter__"><strong>__iter__</strong></a>(self, /)</dt><dd><span class="code">Implement&nbsp;iter(self).</span></dd></dl>
+
+<dl><dt><a name="UserRole-__le__"><strong>__le__</strong></a>(self, value, /)</dt><dd><span class="code">Return&nbsp;self&lt;=value.</span></dd></dl>
+
+<dl><dt><a name="UserRole-__len__"><strong>__len__</strong></a>(self, /)</dt><dd><span class="code">Return&nbsp;len(self).</span></dd></dl>
+
+<dl><dt><a name="UserRole-__lt__"><strong>__lt__</strong></a>(self, value, /)</dt><dd><span class="code">Return&nbsp;self&lt;value.</span></dd></dl>
+
+<dl><dt><a name="UserRole-__mod__"><strong>__mod__</strong></a>(self, value, /)</dt><dd><span class="code">Return&nbsp;self%value.</span></dd></dl>
+
+<dl><dt><a name="UserRole-__mul__"><strong>__mul__</strong></a>(self, value, /)</dt><dd><span class="code">Return&nbsp;self*value.</span></dd></dl>
+
+<dl><dt><a name="UserRole-__ne__"><strong>__ne__</strong></a>(self, value, /)</dt><dd><span class="code">Return&nbsp;self!=value.</span></dd></dl>
+
+<dl><dt><a name="UserRole-__rmod__"><strong>__rmod__</strong></a>(self, value, /)</dt><dd><span class="code">Return&nbsp;value%self.</span></dd></dl>
+
+<dl><dt><a name="UserRole-__rmul__"><strong>__rmul__</strong></a>(self, value, /)</dt><dd><span class="code">Return&nbsp;value*self.</span></dd></dl>
+
+<dl><dt><a name="UserRole-__sizeof__"><strong>__sizeof__</strong></a>(self, /)</dt><dd><span class="code">Return&nbsp;the&nbsp;size&nbsp;of&nbsp;the&nbsp;string&nbsp;in&nbsp;memory,&nbsp;in&nbsp;bytes.</span></dd></dl>
+
+<dl><dt><a name="UserRole-capitalize"><strong>capitalize</strong></a>(self, /)</dt><dd><span class="code">Return&nbsp;a&nbsp;capitalized&nbsp;version&nbsp;of&nbsp;the&nbsp;string.<br>
+&nbsp;<br>
+More&nbsp;specifically,&nbsp;make&nbsp;the&nbsp;first&nbsp;character&nbsp;have&nbsp;upper&nbsp;case&nbsp;and&nbsp;the&nbsp;rest&nbsp;lower<br>
+case.</span></dd></dl>
+
+<dl><dt><a name="UserRole-casefold"><strong>casefold</strong></a>(self, /)</dt><dd><span class="code">Return&nbsp;a&nbsp;version&nbsp;of&nbsp;the&nbsp;string&nbsp;suitable&nbsp;for&nbsp;caseless&nbsp;comparisons.</span></dd></dl>
+
+<dl><dt><a name="UserRole-center"><strong>center</strong></a>(self, width, fillchar=' ', /)</dt><dd><span class="code">Return&nbsp;a&nbsp;centered&nbsp;string&nbsp;of&nbsp;length&nbsp;width.<br>
+&nbsp;<br>
+Padding&nbsp;is&nbsp;done&nbsp;using&nbsp;the&nbsp;specified&nbsp;fill&nbsp;character&nbsp;(default&nbsp;is&nbsp;a&nbsp;space).</span></dd></dl>
+
+<dl><dt><a name="UserRole-count"><strong>count</strong></a>(...)</dt><dd><span class="code">S.<a href="#UserRole-count">count</a>(sub[,&nbsp;start[,&nbsp;end]])&nbsp;-&gt;&nbsp;int<br>
+&nbsp;<br>
+Return&nbsp;the&nbsp;number&nbsp;of&nbsp;non-overlapping&nbsp;occurrences&nbsp;of&nbsp;substring&nbsp;sub&nbsp;in<br>
+string&nbsp;S[start:end].&nbsp;&nbsp;Optional&nbsp;arguments&nbsp;start&nbsp;and&nbsp;end&nbsp;are<br>
+interpreted&nbsp;as&nbsp;in&nbsp;slice&nbsp;notation.</span></dd></dl>
+
+<dl><dt><a name="UserRole-encode"><strong>encode</strong></a>(self, /, encoding='utf-8', errors='strict')</dt><dd><span class="code">Encode&nbsp;the&nbsp;string&nbsp;using&nbsp;the&nbsp;codec&nbsp;registered&nbsp;for&nbsp;encoding.<br>
+&nbsp;<br>
+encoding<br>
+&nbsp;&nbsp;The&nbsp;encoding&nbsp;in&nbsp;which&nbsp;to&nbsp;encode&nbsp;the&nbsp;string.<br>
+errors<br>
+&nbsp;&nbsp;The&nbsp;error&nbsp;handling&nbsp;scheme&nbsp;to&nbsp;use&nbsp;for&nbsp;encoding&nbsp;errors.<br>
+&nbsp;&nbsp;The&nbsp;default&nbsp;is&nbsp;'strict'&nbsp;meaning&nbsp;that&nbsp;encoding&nbsp;errors&nbsp;raise&nbsp;a<br>
+&nbsp;&nbsp;UnicodeEncodeError.&nbsp;&nbsp;Other&nbsp;possible&nbsp;values&nbsp;are&nbsp;'ignore',&nbsp;'replace'&nbsp;and<br>
+&nbsp;&nbsp;'xmlcharrefreplace'&nbsp;as&nbsp;well&nbsp;as&nbsp;any&nbsp;other&nbsp;name&nbsp;registered&nbsp;with<br>
+&nbsp;&nbsp;codecs.register_error&nbsp;that&nbsp;can&nbsp;handle&nbsp;UnicodeEncodeErrors.</span></dd></dl>
+
+<dl><dt><a name="UserRole-endswith"><strong>endswith</strong></a>(...)</dt><dd><span class="code">S.<a href="#UserRole-endswith">endswith</a>(suffix[,&nbsp;start[,&nbsp;end]])&nbsp;-&gt;&nbsp;bool<br>
+&nbsp;<br>
+Return&nbsp;True&nbsp;if&nbsp;S&nbsp;ends&nbsp;with&nbsp;the&nbsp;specified&nbsp;suffix,&nbsp;False&nbsp;otherwise.<br>
+With&nbsp;optional&nbsp;start,&nbsp;test&nbsp;S&nbsp;beginning&nbsp;at&nbsp;that&nbsp;position.<br>
+With&nbsp;optional&nbsp;end,&nbsp;stop&nbsp;comparing&nbsp;S&nbsp;at&nbsp;that&nbsp;position.<br>
+suffix&nbsp;can&nbsp;also&nbsp;be&nbsp;a&nbsp;tuple&nbsp;of&nbsp;strings&nbsp;to&nbsp;try.</span></dd></dl>
+
+<dl><dt><a name="UserRole-expandtabs"><strong>expandtabs</strong></a>(self, /, tabsize=8)</dt><dd><span class="code">Return&nbsp;a&nbsp;copy&nbsp;where&nbsp;all&nbsp;tab&nbsp;characters&nbsp;are&nbsp;expanded&nbsp;using&nbsp;spaces.<br>
+&nbsp;<br>
+If&nbsp;tabsize&nbsp;is&nbsp;not&nbsp;given,&nbsp;a&nbsp;tab&nbsp;size&nbsp;of&nbsp;8&nbsp;characters&nbsp;is&nbsp;assumed.</span></dd></dl>
+
+<dl><dt><a name="UserRole-find"><strong>find</strong></a>(...)</dt><dd><span class="code">S.<a href="#UserRole-find">find</a>(sub[,&nbsp;start[,&nbsp;end]])&nbsp;-&gt;&nbsp;int<br>
+&nbsp;<br>
+Return&nbsp;the&nbsp;lowest&nbsp;index&nbsp;in&nbsp;S&nbsp;where&nbsp;substring&nbsp;sub&nbsp;is&nbsp;found,<br>
+such&nbsp;that&nbsp;sub&nbsp;is&nbsp;contained&nbsp;within&nbsp;S[start:end].&nbsp;&nbsp;Optional<br>
+arguments&nbsp;start&nbsp;and&nbsp;end&nbsp;are&nbsp;interpreted&nbsp;as&nbsp;in&nbsp;slice&nbsp;notation.<br>
+&nbsp;<br>
+Return&nbsp;-1&nbsp;on&nbsp;failure.</span></dd></dl>
+
+<dl><dt><a name="UserRole-format"><strong>format</strong></a>(...)</dt><dd><span class="code">S.<a href="#UserRole-format">format</a>(*args,&nbsp;**kwargs)&nbsp;-&gt;&nbsp;<a href="builtins.html#str">str</a><br>
+&nbsp;<br>
+Return&nbsp;a&nbsp;formatted&nbsp;version&nbsp;of&nbsp;S,&nbsp;using&nbsp;substitutions&nbsp;from&nbsp;args&nbsp;and&nbsp;kwargs.<br>
+The&nbsp;substitutions&nbsp;are&nbsp;identified&nbsp;by&nbsp;braces&nbsp;('{'&nbsp;and&nbsp;'}').</span></dd></dl>
+
+<dl><dt><a name="UserRole-format_map"><strong>format_map</strong></a>(...)</dt><dd><span class="code">S.<a href="#UserRole-format_map">format_map</a>(mapping)&nbsp;-&gt;&nbsp;<a href="builtins.html#str">str</a><br>
+&nbsp;<br>
+Return&nbsp;a&nbsp;formatted&nbsp;version&nbsp;of&nbsp;S,&nbsp;using&nbsp;substitutions&nbsp;from&nbsp;mapping.<br>
+The&nbsp;substitutions&nbsp;are&nbsp;identified&nbsp;by&nbsp;braces&nbsp;('{'&nbsp;and&nbsp;'}').</span></dd></dl>
+
+<dl><dt><a name="UserRole-index"><strong>index</strong></a>(...)</dt><dd><span class="code">S.<a href="#UserRole-index">index</a>(sub[,&nbsp;start[,&nbsp;end]])&nbsp;-&gt;&nbsp;int<br>
+&nbsp;<br>
+Return&nbsp;the&nbsp;lowest&nbsp;index&nbsp;in&nbsp;S&nbsp;where&nbsp;substring&nbsp;sub&nbsp;is&nbsp;found,<br>
+such&nbsp;that&nbsp;sub&nbsp;is&nbsp;contained&nbsp;within&nbsp;S[start:end].&nbsp;&nbsp;Optional<br>
+arguments&nbsp;start&nbsp;and&nbsp;end&nbsp;are&nbsp;interpreted&nbsp;as&nbsp;in&nbsp;slice&nbsp;notation.<br>
+&nbsp;<br>
+Raises&nbsp;ValueError&nbsp;when&nbsp;the&nbsp;substring&nbsp;is&nbsp;not&nbsp;found.</span></dd></dl>
+
+<dl><dt><a name="UserRole-isalnum"><strong>isalnum</strong></a>(self, /)</dt><dd><span class="code">Return&nbsp;True&nbsp;if&nbsp;the&nbsp;string&nbsp;is&nbsp;an&nbsp;alpha-numeric&nbsp;string,&nbsp;False&nbsp;otherwise.<br>
+&nbsp;<br>
+A&nbsp;string&nbsp;is&nbsp;alpha-numeric&nbsp;if&nbsp;all&nbsp;characters&nbsp;in&nbsp;the&nbsp;string&nbsp;are&nbsp;alpha-numeric&nbsp;and<br>
+there&nbsp;is&nbsp;at&nbsp;least&nbsp;one&nbsp;character&nbsp;in&nbsp;the&nbsp;string.</span></dd></dl>
+
+<dl><dt><a name="UserRole-isalpha"><strong>isalpha</strong></a>(self, /)</dt><dd><span class="code">Return&nbsp;True&nbsp;if&nbsp;the&nbsp;string&nbsp;is&nbsp;an&nbsp;alphabetic&nbsp;string,&nbsp;False&nbsp;otherwise.<br>
+&nbsp;<br>
+A&nbsp;string&nbsp;is&nbsp;alphabetic&nbsp;if&nbsp;all&nbsp;characters&nbsp;in&nbsp;the&nbsp;string&nbsp;are&nbsp;alphabetic&nbsp;and&nbsp;there<br>
+is&nbsp;at&nbsp;least&nbsp;one&nbsp;character&nbsp;in&nbsp;the&nbsp;string.</span></dd></dl>
+
+<dl><dt><a name="UserRole-isascii"><strong>isascii</strong></a>(self, /)</dt><dd><span class="code">Return&nbsp;True&nbsp;if&nbsp;all&nbsp;characters&nbsp;in&nbsp;the&nbsp;string&nbsp;are&nbsp;ASCII,&nbsp;False&nbsp;otherwise.<br>
+&nbsp;<br>
+ASCII&nbsp;characters&nbsp;have&nbsp;code&nbsp;points&nbsp;in&nbsp;the&nbsp;range&nbsp;U+0000-U+007F.<br>
+Empty&nbsp;string&nbsp;is&nbsp;ASCII&nbsp;too.</span></dd></dl>
+
+<dl><dt><a name="UserRole-isdecimal"><strong>isdecimal</strong></a>(self, /)</dt><dd><span class="code">Return&nbsp;True&nbsp;if&nbsp;the&nbsp;string&nbsp;is&nbsp;a&nbsp;decimal&nbsp;string,&nbsp;False&nbsp;otherwise.<br>
+&nbsp;<br>
+A&nbsp;string&nbsp;is&nbsp;a&nbsp;decimal&nbsp;string&nbsp;if&nbsp;all&nbsp;characters&nbsp;in&nbsp;the&nbsp;string&nbsp;are&nbsp;decimal&nbsp;and<br>
+there&nbsp;is&nbsp;at&nbsp;least&nbsp;one&nbsp;character&nbsp;in&nbsp;the&nbsp;string.</span></dd></dl>
+
+<dl><dt><a name="UserRole-isdigit"><strong>isdigit</strong></a>(self, /)</dt><dd><span class="code">Return&nbsp;True&nbsp;if&nbsp;the&nbsp;string&nbsp;is&nbsp;a&nbsp;digit&nbsp;string,&nbsp;False&nbsp;otherwise.<br>
+&nbsp;<br>
+A&nbsp;string&nbsp;is&nbsp;a&nbsp;digit&nbsp;string&nbsp;if&nbsp;all&nbsp;characters&nbsp;in&nbsp;the&nbsp;string&nbsp;are&nbsp;digits&nbsp;and&nbsp;there<br>
+is&nbsp;at&nbsp;least&nbsp;one&nbsp;character&nbsp;in&nbsp;the&nbsp;string.</span></dd></dl>
+
+<dl><dt><a name="UserRole-isidentifier"><strong>isidentifier</strong></a>(self, /)</dt><dd><span class="code">Return&nbsp;True&nbsp;if&nbsp;the&nbsp;string&nbsp;is&nbsp;a&nbsp;valid&nbsp;Python&nbsp;identifier,&nbsp;False&nbsp;otherwise.<br>
+&nbsp;<br>
+Call&nbsp;keyword.iskeyword(s)&nbsp;to&nbsp;test&nbsp;whether&nbsp;string&nbsp;s&nbsp;is&nbsp;a&nbsp;reserved&nbsp;identifier,<br>
+such&nbsp;as&nbsp;"def"&nbsp;or&nbsp;"class".</span></dd></dl>
+
+<dl><dt><a name="UserRole-islower"><strong>islower</strong></a>(self, /)</dt><dd><span class="code">Return&nbsp;True&nbsp;if&nbsp;the&nbsp;string&nbsp;is&nbsp;a&nbsp;lowercase&nbsp;string,&nbsp;False&nbsp;otherwise.<br>
+&nbsp;<br>
+A&nbsp;string&nbsp;is&nbsp;lowercase&nbsp;if&nbsp;all&nbsp;cased&nbsp;characters&nbsp;in&nbsp;the&nbsp;string&nbsp;are&nbsp;lowercase&nbsp;and<br>
+there&nbsp;is&nbsp;at&nbsp;least&nbsp;one&nbsp;cased&nbsp;character&nbsp;in&nbsp;the&nbsp;string.</span></dd></dl>
+
+<dl><dt><a name="UserRole-isnumeric"><strong>isnumeric</strong></a>(self, /)</dt><dd><span class="code">Return&nbsp;True&nbsp;if&nbsp;the&nbsp;string&nbsp;is&nbsp;a&nbsp;numeric&nbsp;string,&nbsp;False&nbsp;otherwise.<br>
+&nbsp;<br>
+A&nbsp;string&nbsp;is&nbsp;numeric&nbsp;if&nbsp;all&nbsp;characters&nbsp;in&nbsp;the&nbsp;string&nbsp;are&nbsp;numeric&nbsp;and&nbsp;there&nbsp;is&nbsp;at<br>
+least&nbsp;one&nbsp;character&nbsp;in&nbsp;the&nbsp;string.</span></dd></dl>
+
+<dl><dt><a name="UserRole-isprintable"><strong>isprintable</strong></a>(self, /)</dt><dd><span class="code">Return&nbsp;True&nbsp;if&nbsp;the&nbsp;string&nbsp;is&nbsp;printable,&nbsp;False&nbsp;otherwise.<br>
+&nbsp;<br>
+A&nbsp;string&nbsp;is&nbsp;printable&nbsp;if&nbsp;all&nbsp;of&nbsp;its&nbsp;characters&nbsp;are&nbsp;considered&nbsp;printable&nbsp;in<br>
+repr()&nbsp;or&nbsp;if&nbsp;it&nbsp;is&nbsp;empty.</span></dd></dl>
+
+<dl><dt><a name="UserRole-isspace"><strong>isspace</strong></a>(self, /)</dt><dd><span class="code">Return&nbsp;True&nbsp;if&nbsp;the&nbsp;string&nbsp;is&nbsp;a&nbsp;whitespace&nbsp;string,&nbsp;False&nbsp;otherwise.<br>
+&nbsp;<br>
+A&nbsp;string&nbsp;is&nbsp;whitespace&nbsp;if&nbsp;all&nbsp;characters&nbsp;in&nbsp;the&nbsp;string&nbsp;are&nbsp;whitespace&nbsp;and&nbsp;there<br>
+is&nbsp;at&nbsp;least&nbsp;one&nbsp;character&nbsp;in&nbsp;the&nbsp;string.</span></dd></dl>
+
+<dl><dt><a name="UserRole-istitle"><strong>istitle</strong></a>(self, /)</dt><dd><span class="code">Return&nbsp;True&nbsp;if&nbsp;the&nbsp;string&nbsp;is&nbsp;a&nbsp;title-cased&nbsp;string,&nbsp;False&nbsp;otherwise.<br>
+&nbsp;<br>
+In&nbsp;a&nbsp;title-cased&nbsp;string,&nbsp;upper-&nbsp;and&nbsp;title-case&nbsp;characters&nbsp;may&nbsp;only<br>
+follow&nbsp;uncased&nbsp;characters&nbsp;and&nbsp;lowercase&nbsp;characters&nbsp;only&nbsp;cased&nbsp;ones.</span></dd></dl>
+
+<dl><dt><a name="UserRole-isupper"><strong>isupper</strong></a>(self, /)</dt><dd><span class="code">Return&nbsp;True&nbsp;if&nbsp;the&nbsp;string&nbsp;is&nbsp;an&nbsp;uppercase&nbsp;string,&nbsp;False&nbsp;otherwise.<br>
+&nbsp;<br>
+A&nbsp;string&nbsp;is&nbsp;uppercase&nbsp;if&nbsp;all&nbsp;cased&nbsp;characters&nbsp;in&nbsp;the&nbsp;string&nbsp;are&nbsp;uppercase&nbsp;and<br>
+there&nbsp;is&nbsp;at&nbsp;least&nbsp;one&nbsp;cased&nbsp;character&nbsp;in&nbsp;the&nbsp;string.</span></dd></dl>
+
+<dl><dt><a name="UserRole-join"><strong>join</strong></a>(self, iterable, /)</dt><dd><span class="code">Concatenate&nbsp;any&nbsp;number&nbsp;of&nbsp;strings.<br>
+&nbsp;<br>
+The&nbsp;string&nbsp;whose&nbsp;method&nbsp;is&nbsp;called&nbsp;is&nbsp;inserted&nbsp;in&nbsp;between&nbsp;each&nbsp;given&nbsp;string.<br>
+The&nbsp;result&nbsp;is&nbsp;returned&nbsp;as&nbsp;a&nbsp;new&nbsp;string.<br>
+&nbsp;<br>
+Example:&nbsp;'.'.<a href="#UserRole-join">join</a>(['ab',&nbsp;'pq',&nbsp;'rs'])&nbsp;-&gt;&nbsp;'ab.pq.rs'</span></dd></dl>
+
+<dl><dt><a name="UserRole-ljust"><strong>ljust</strong></a>(self, width, fillchar=' ', /)</dt><dd><span class="code">Return&nbsp;a&nbsp;left-justified&nbsp;string&nbsp;of&nbsp;length&nbsp;width.<br>
+&nbsp;<br>
+Padding&nbsp;is&nbsp;done&nbsp;using&nbsp;the&nbsp;specified&nbsp;fill&nbsp;character&nbsp;(default&nbsp;is&nbsp;a&nbsp;space).</span></dd></dl>
+
+<dl><dt><a name="UserRole-lower"><strong>lower</strong></a>(self, /)</dt><dd><span class="code">Return&nbsp;a&nbsp;copy&nbsp;of&nbsp;the&nbsp;string&nbsp;converted&nbsp;to&nbsp;lowercase.</span></dd></dl>
+
+<dl><dt><a name="UserRole-lstrip"><strong>lstrip</strong></a>(self, chars=None, /)</dt><dd><span class="code">Return&nbsp;a&nbsp;copy&nbsp;of&nbsp;the&nbsp;string&nbsp;with&nbsp;leading&nbsp;whitespace&nbsp;removed.<br>
+&nbsp;<br>
+If&nbsp;chars&nbsp;is&nbsp;given&nbsp;and&nbsp;not&nbsp;None,&nbsp;remove&nbsp;characters&nbsp;in&nbsp;chars&nbsp;instead.</span></dd></dl>
+
+<dl><dt><a name="UserRole-partition"><strong>partition</strong></a>(self, sep, /)</dt><dd><span class="code">Partition&nbsp;the&nbsp;string&nbsp;into&nbsp;three&nbsp;parts&nbsp;using&nbsp;the&nbsp;given&nbsp;separator.<br>
+&nbsp;<br>
+This&nbsp;will&nbsp;search&nbsp;for&nbsp;the&nbsp;separator&nbsp;in&nbsp;the&nbsp;string.&nbsp;&nbsp;If&nbsp;the&nbsp;separator&nbsp;is&nbsp;found,<br>
+returns&nbsp;a&nbsp;3-tuple&nbsp;containing&nbsp;the&nbsp;part&nbsp;before&nbsp;the&nbsp;separator,&nbsp;the&nbsp;separator<br>
+itself,&nbsp;and&nbsp;the&nbsp;part&nbsp;after&nbsp;it.<br>
+&nbsp;<br>
+If&nbsp;the&nbsp;separator&nbsp;is&nbsp;not&nbsp;found,&nbsp;returns&nbsp;a&nbsp;3-tuple&nbsp;containing&nbsp;the&nbsp;original&nbsp;string<br>
+and&nbsp;two&nbsp;empty&nbsp;strings.</span></dd></dl>
+
+<dl><dt><a name="UserRole-removeprefix"><strong>removeprefix</strong></a>(self, prefix, /)</dt><dd><span class="code">Return&nbsp;a&nbsp;<a href="builtins.html#str">str</a>&nbsp;with&nbsp;the&nbsp;given&nbsp;prefix&nbsp;string&nbsp;removed&nbsp;if&nbsp;present.<br>
+&nbsp;<br>
+If&nbsp;the&nbsp;string&nbsp;starts&nbsp;with&nbsp;the&nbsp;prefix&nbsp;string,&nbsp;return&nbsp;string[len(prefix):].<br>
+Otherwise,&nbsp;return&nbsp;a&nbsp;copy&nbsp;of&nbsp;the&nbsp;original&nbsp;string.</span></dd></dl>
+
+<dl><dt><a name="UserRole-removesuffix"><strong>removesuffix</strong></a>(self, suffix, /)</dt><dd><span class="code">Return&nbsp;a&nbsp;<a href="builtins.html#str">str</a>&nbsp;with&nbsp;the&nbsp;given&nbsp;suffix&nbsp;string&nbsp;removed&nbsp;if&nbsp;present.<br>
+&nbsp;<br>
+If&nbsp;the&nbsp;string&nbsp;ends&nbsp;with&nbsp;the&nbsp;suffix&nbsp;string&nbsp;and&nbsp;that&nbsp;suffix&nbsp;is&nbsp;not&nbsp;empty,<br>
+return&nbsp;string[:-len(suffix)].&nbsp;Otherwise,&nbsp;return&nbsp;a&nbsp;copy&nbsp;of&nbsp;the&nbsp;original<br>
+string.</span></dd></dl>
+
+<dl><dt><a name="UserRole-replace"><strong>replace</strong></a>(self, old, new, count=-1, /)</dt><dd><span class="code">Return&nbsp;a&nbsp;copy&nbsp;with&nbsp;all&nbsp;occurrences&nbsp;of&nbsp;substring&nbsp;old&nbsp;replaced&nbsp;by&nbsp;new.<br>
+&nbsp;<br>
+&nbsp;&nbsp;count<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Maximum&nbsp;number&nbsp;of&nbsp;occurrences&nbsp;to&nbsp;replace.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-1&nbsp;(the&nbsp;default&nbsp;value)&nbsp;means&nbsp;replace&nbsp;all&nbsp;occurrences.<br>
+&nbsp;<br>
+If&nbsp;the&nbsp;optional&nbsp;argument&nbsp;count&nbsp;is&nbsp;given,&nbsp;only&nbsp;the&nbsp;first&nbsp;count&nbsp;occurrences&nbsp;are<br>
+replaced.</span></dd></dl>
+
+<dl><dt><a name="UserRole-rfind"><strong>rfind</strong></a>(...)</dt><dd><span class="code">S.<a href="#UserRole-rfind">rfind</a>(sub[,&nbsp;start[,&nbsp;end]])&nbsp;-&gt;&nbsp;int<br>
+&nbsp;<br>
+Return&nbsp;the&nbsp;highest&nbsp;index&nbsp;in&nbsp;S&nbsp;where&nbsp;substring&nbsp;sub&nbsp;is&nbsp;found,<br>
+such&nbsp;that&nbsp;sub&nbsp;is&nbsp;contained&nbsp;within&nbsp;S[start:end].&nbsp;&nbsp;Optional<br>
+arguments&nbsp;start&nbsp;and&nbsp;end&nbsp;are&nbsp;interpreted&nbsp;as&nbsp;in&nbsp;slice&nbsp;notation.<br>
+&nbsp;<br>
+Return&nbsp;-1&nbsp;on&nbsp;failure.</span></dd></dl>
+
+<dl><dt><a name="UserRole-rindex"><strong>rindex</strong></a>(...)</dt><dd><span class="code">S.<a href="#UserRole-rindex">rindex</a>(sub[,&nbsp;start[,&nbsp;end]])&nbsp;-&gt;&nbsp;int<br>
+&nbsp;<br>
+Return&nbsp;the&nbsp;highest&nbsp;index&nbsp;in&nbsp;S&nbsp;where&nbsp;substring&nbsp;sub&nbsp;is&nbsp;found,<br>
+such&nbsp;that&nbsp;sub&nbsp;is&nbsp;contained&nbsp;within&nbsp;S[start:end].&nbsp;&nbsp;Optional<br>
+arguments&nbsp;start&nbsp;and&nbsp;end&nbsp;are&nbsp;interpreted&nbsp;as&nbsp;in&nbsp;slice&nbsp;notation.<br>
+&nbsp;<br>
+Raises&nbsp;ValueError&nbsp;when&nbsp;the&nbsp;substring&nbsp;is&nbsp;not&nbsp;found.</span></dd></dl>
+
+<dl><dt><a name="UserRole-rjust"><strong>rjust</strong></a>(self, width, fillchar=' ', /)</dt><dd><span class="code">Return&nbsp;a&nbsp;right-justified&nbsp;string&nbsp;of&nbsp;length&nbsp;width.<br>
+&nbsp;<br>
+Padding&nbsp;is&nbsp;done&nbsp;using&nbsp;the&nbsp;specified&nbsp;fill&nbsp;character&nbsp;(default&nbsp;is&nbsp;a&nbsp;space).</span></dd></dl>
+
+<dl><dt><a name="UserRole-rpartition"><strong>rpartition</strong></a>(self, sep, /)</dt><dd><span class="code">Partition&nbsp;the&nbsp;string&nbsp;into&nbsp;three&nbsp;parts&nbsp;using&nbsp;the&nbsp;given&nbsp;separator.<br>
+&nbsp;<br>
+This&nbsp;will&nbsp;search&nbsp;for&nbsp;the&nbsp;separator&nbsp;in&nbsp;the&nbsp;string,&nbsp;starting&nbsp;at&nbsp;the&nbsp;end.&nbsp;If<br>
+the&nbsp;separator&nbsp;is&nbsp;found,&nbsp;returns&nbsp;a&nbsp;3-tuple&nbsp;containing&nbsp;the&nbsp;part&nbsp;before&nbsp;the<br>
+separator,&nbsp;the&nbsp;separator&nbsp;itself,&nbsp;and&nbsp;the&nbsp;part&nbsp;after&nbsp;it.<br>
+&nbsp;<br>
+If&nbsp;the&nbsp;separator&nbsp;is&nbsp;not&nbsp;found,&nbsp;returns&nbsp;a&nbsp;3-tuple&nbsp;containing&nbsp;two&nbsp;empty&nbsp;strings<br>
+and&nbsp;the&nbsp;original&nbsp;string.</span></dd></dl>
+
+<dl><dt><a name="UserRole-rsplit"><strong>rsplit</strong></a>(self, /, sep=None, maxsplit=-1)</dt><dd><span class="code">Return&nbsp;a&nbsp;list&nbsp;of&nbsp;the&nbsp;substrings&nbsp;in&nbsp;the&nbsp;string,&nbsp;using&nbsp;sep&nbsp;as&nbsp;the&nbsp;separator&nbsp;string.<br>
+&nbsp;<br>
+&nbsp;&nbsp;sep<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;separator&nbsp;used&nbsp;to&nbsp;split&nbsp;the&nbsp;string.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;When&nbsp;set&nbsp;to&nbsp;None&nbsp;(the&nbsp;default&nbsp;value),&nbsp;will&nbsp;split&nbsp;on&nbsp;any&nbsp;whitespace<br>
+&nbsp;&nbsp;&nbsp;&nbsp;character&nbsp;(including&nbsp;\n&nbsp;\r&nbsp;\t&nbsp;\f&nbsp;and&nbsp;spaces)&nbsp;and&nbsp;will&nbsp;discard<br>
+&nbsp;&nbsp;&nbsp;&nbsp;empty&nbsp;strings&nbsp;from&nbsp;the&nbsp;result.<br>
+&nbsp;&nbsp;maxsplit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Maximum&nbsp;number&nbsp;of&nbsp;splits.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-1&nbsp;(the&nbsp;default&nbsp;value)&nbsp;means&nbsp;no&nbsp;limit.<br>
+&nbsp;<br>
+Splitting&nbsp;starts&nbsp;at&nbsp;the&nbsp;end&nbsp;of&nbsp;the&nbsp;string&nbsp;and&nbsp;works&nbsp;to&nbsp;the&nbsp;front.</span></dd></dl>
+
+<dl><dt><a name="UserRole-rstrip"><strong>rstrip</strong></a>(self, chars=None, /)</dt><dd><span class="code">Return&nbsp;a&nbsp;copy&nbsp;of&nbsp;the&nbsp;string&nbsp;with&nbsp;trailing&nbsp;whitespace&nbsp;removed.<br>
+&nbsp;<br>
+If&nbsp;chars&nbsp;is&nbsp;given&nbsp;and&nbsp;not&nbsp;None,&nbsp;remove&nbsp;characters&nbsp;in&nbsp;chars&nbsp;instead.</span></dd></dl>
+
+<dl><dt><a name="UserRole-split"><strong>split</strong></a>(self, /, sep=None, maxsplit=-1)</dt><dd><span class="code">Return&nbsp;a&nbsp;list&nbsp;of&nbsp;the&nbsp;substrings&nbsp;in&nbsp;the&nbsp;string,&nbsp;using&nbsp;sep&nbsp;as&nbsp;the&nbsp;separator&nbsp;string.<br>
+&nbsp;<br>
+&nbsp;&nbsp;sep<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;separator&nbsp;used&nbsp;to&nbsp;split&nbsp;the&nbsp;string.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;When&nbsp;set&nbsp;to&nbsp;None&nbsp;(the&nbsp;default&nbsp;value),&nbsp;will&nbsp;split&nbsp;on&nbsp;any&nbsp;whitespace<br>
+&nbsp;&nbsp;&nbsp;&nbsp;character&nbsp;(including&nbsp;\n&nbsp;\r&nbsp;\t&nbsp;\f&nbsp;and&nbsp;spaces)&nbsp;and&nbsp;will&nbsp;discard<br>
+&nbsp;&nbsp;&nbsp;&nbsp;empty&nbsp;strings&nbsp;from&nbsp;the&nbsp;result.<br>
+&nbsp;&nbsp;maxsplit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Maximum&nbsp;number&nbsp;of&nbsp;splits.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-1&nbsp;(the&nbsp;default&nbsp;value)&nbsp;means&nbsp;no&nbsp;limit.<br>
+&nbsp;<br>
+Splitting&nbsp;starts&nbsp;at&nbsp;the&nbsp;front&nbsp;of&nbsp;the&nbsp;string&nbsp;and&nbsp;works&nbsp;to&nbsp;the&nbsp;end.<br>
+&nbsp;<br>
+Note,&nbsp;<a href="builtins.html#str">str</a>.<a href="#UserRole-split">split</a>()&nbsp;is&nbsp;mainly&nbsp;useful&nbsp;for&nbsp;data&nbsp;that&nbsp;has&nbsp;been&nbsp;intentionally<br>
+delimited.&nbsp;&nbsp;With&nbsp;natural&nbsp;text&nbsp;that&nbsp;includes&nbsp;punctuation,&nbsp;consider&nbsp;using<br>
+the&nbsp;regular&nbsp;expression&nbsp;module.</span></dd></dl>
+
+<dl><dt><a name="UserRole-splitlines"><strong>splitlines</strong></a>(self, /, keepends=False)</dt><dd><span class="code">Return&nbsp;a&nbsp;list&nbsp;of&nbsp;the&nbsp;lines&nbsp;in&nbsp;the&nbsp;string,&nbsp;breaking&nbsp;at&nbsp;line&nbsp;boundaries.<br>
+&nbsp;<br>
+Line&nbsp;breaks&nbsp;are&nbsp;not&nbsp;included&nbsp;in&nbsp;the&nbsp;resulting&nbsp;list&nbsp;unless&nbsp;keepends&nbsp;is&nbsp;given&nbsp;and<br>
+true.</span></dd></dl>
+
+<dl><dt><a name="UserRole-startswith"><strong>startswith</strong></a>(...)</dt><dd><span class="code">S.<a href="#UserRole-startswith">startswith</a>(prefix[,&nbsp;start[,&nbsp;end]])&nbsp;-&gt;&nbsp;bool<br>
+&nbsp;<br>
+Return&nbsp;True&nbsp;if&nbsp;S&nbsp;starts&nbsp;with&nbsp;the&nbsp;specified&nbsp;prefix,&nbsp;False&nbsp;otherwise.<br>
+With&nbsp;optional&nbsp;start,&nbsp;test&nbsp;S&nbsp;beginning&nbsp;at&nbsp;that&nbsp;position.<br>
+With&nbsp;optional&nbsp;end,&nbsp;stop&nbsp;comparing&nbsp;S&nbsp;at&nbsp;that&nbsp;position.<br>
+prefix&nbsp;can&nbsp;also&nbsp;be&nbsp;a&nbsp;tuple&nbsp;of&nbsp;strings&nbsp;to&nbsp;try.</span></dd></dl>
+
+<dl><dt><a name="UserRole-strip"><strong>strip</strong></a>(self, chars=None, /)</dt><dd><span class="code">Return&nbsp;a&nbsp;copy&nbsp;of&nbsp;the&nbsp;string&nbsp;with&nbsp;leading&nbsp;and&nbsp;trailing&nbsp;whitespace&nbsp;removed.<br>
+&nbsp;<br>
+If&nbsp;chars&nbsp;is&nbsp;given&nbsp;and&nbsp;not&nbsp;None,&nbsp;remove&nbsp;characters&nbsp;in&nbsp;chars&nbsp;instead.</span></dd></dl>
+
+<dl><dt><a name="UserRole-swapcase"><strong>swapcase</strong></a>(self, /)</dt><dd><span class="code">Convert&nbsp;uppercase&nbsp;characters&nbsp;to&nbsp;lowercase&nbsp;and&nbsp;lowercase&nbsp;characters&nbsp;to&nbsp;uppercase.</span></dd></dl>
+
+<dl><dt><a name="UserRole-title"><strong>title</strong></a>(self, /)</dt><dd><span class="code">Return&nbsp;a&nbsp;version&nbsp;of&nbsp;the&nbsp;string&nbsp;where&nbsp;each&nbsp;word&nbsp;is&nbsp;titlecased.<br>
+&nbsp;<br>
+More&nbsp;specifically,&nbsp;words&nbsp;start&nbsp;with&nbsp;uppercased&nbsp;characters&nbsp;and&nbsp;all&nbsp;remaining<br>
+cased&nbsp;characters&nbsp;have&nbsp;lower&nbsp;case.</span></dd></dl>
+
+<dl><dt><a name="UserRole-translate"><strong>translate</strong></a>(self, table, /)</dt><dd><span class="code">Replace&nbsp;each&nbsp;character&nbsp;in&nbsp;the&nbsp;string&nbsp;using&nbsp;the&nbsp;given&nbsp;translation&nbsp;table.<br>
+&nbsp;<br>
+&nbsp;&nbsp;table<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Translation&nbsp;table,&nbsp;which&nbsp;must&nbsp;be&nbsp;a&nbsp;mapping&nbsp;of&nbsp;Unicode&nbsp;ordinals&nbsp;to<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Unicode&nbsp;ordinals,&nbsp;strings,&nbsp;or&nbsp;None.<br>
+&nbsp;<br>
+The&nbsp;table&nbsp;must&nbsp;implement&nbsp;lookup/indexing&nbsp;via&nbsp;__getitem__,&nbsp;for&nbsp;instance&nbsp;a<br>
+dictionary&nbsp;or&nbsp;list.&nbsp;&nbsp;If&nbsp;this&nbsp;operation&nbsp;raises&nbsp;LookupError,&nbsp;the&nbsp;character&nbsp;is<br>
+left&nbsp;untouched.&nbsp;&nbsp;Characters&nbsp;mapped&nbsp;to&nbsp;None&nbsp;are&nbsp;deleted.</span></dd></dl>
+
+<dl><dt><a name="UserRole-upper"><strong>upper</strong></a>(self, /)</dt><dd><span class="code">Return&nbsp;a&nbsp;copy&nbsp;of&nbsp;the&nbsp;string&nbsp;converted&nbsp;to&nbsp;uppercase.</span></dd></dl>
+
+<dl><dt><a name="UserRole-zfill"><strong>zfill</strong></a>(self, width, /)</dt><dd><span class="code">Pad&nbsp;a&nbsp;numeric&nbsp;string&nbsp;with&nbsp;zeros&nbsp;on&nbsp;the&nbsp;left,&nbsp;to&nbsp;fill&nbsp;a&nbsp;field&nbsp;of&nbsp;the&nbsp;given&nbsp;width.<br>
+&nbsp;<br>
+The&nbsp;string&nbsp;is&nbsp;never&nbsp;truncated.</span></dd></dl>
+
+<hr>
+Static methods inherited from <a href="builtins.html#str">builtins.str</a>:<br>
+<dl><dt><a name="UserRole-maketrans"><strong>maketrans</strong></a>(...)</dt><dd><span class="code">Return&nbsp;a&nbsp;translation&nbsp;table&nbsp;usable&nbsp;for&nbsp;<a href="builtins.html#str">str</a>.<a href="#UserRole-translate">translate</a>().<br>
+&nbsp;<br>
+If&nbsp;there&nbsp;is&nbsp;only&nbsp;one&nbsp;argument,&nbsp;it&nbsp;must&nbsp;be&nbsp;a&nbsp;dictionary&nbsp;mapping&nbsp;Unicode<br>
+ordinals&nbsp;(integers)&nbsp;or&nbsp;characters&nbsp;to&nbsp;Unicode&nbsp;ordinals,&nbsp;strings&nbsp;or&nbsp;None.<br>
+Character&nbsp;keys&nbsp;will&nbsp;be&nbsp;then&nbsp;converted&nbsp;to&nbsp;ordinals.<br>
+If&nbsp;there&nbsp;are&nbsp;two&nbsp;arguments,&nbsp;they&nbsp;must&nbsp;be&nbsp;strings&nbsp;of&nbsp;equal&nbsp;length,&nbsp;and<br>
+in&nbsp;the&nbsp;resulting&nbsp;dictionary,&nbsp;each&nbsp;character&nbsp;in&nbsp;x&nbsp;will&nbsp;be&nbsp;mapped&nbsp;to&nbsp;the<br>
+character&nbsp;at&nbsp;the&nbsp;same&nbsp;position&nbsp;in&nbsp;y.&nbsp;If&nbsp;there&nbsp;is&nbsp;a&nbsp;third&nbsp;argument,&nbsp;it<br>
+must&nbsp;be&nbsp;a&nbsp;string,&nbsp;whose&nbsp;characters&nbsp;will&nbsp;be&nbsp;mapped&nbsp;to&nbsp;None&nbsp;in&nbsp;the&nbsp;result.</span></dd></dl>
+
+<hr>
+Methods inherited from <a href="enum.html#Enum">enum.Enum</a>:<br>
+<dl><dt><a name="UserRole-__dir__"><strong>__dir__</strong></a>(self)</dt><dd><span class="code">Returns&nbsp;public&nbsp;methods&nbsp;and&nbsp;other&nbsp;interesting&nbsp;attributes.</span></dd></dl>
+
+<dl><dt><a name="UserRole-__init__"><strong>__init__</strong></a>(self, *args, **kwds)</dt><dd><span class="code">Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</span></dd></dl>
+
+<dl><dt><a name="UserRole-__reduce_ex__"><strong>__reduce_ex__</strong></a>(self, proto)</dt><dd><span class="code">Helper&nbsp;for&nbsp;pickle.</span></dd></dl>
+
+<hr>
+Data descriptors inherited from <a href="enum.html#Enum">enum.Enum</a>:<br>
+<dl><dt><strong>name</strong></dt>
+<dd><span class="code">The&nbsp;name&nbsp;of&nbsp;the&nbsp;Enum&nbsp;member.</span></dd>
+</dl>
+<dl><dt><strong>value</strong></dt>
+<dd><span class="code">The&nbsp;value&nbsp;of&nbsp;the&nbsp;Enum&nbsp;member.</span></dd>
+</dl>
+<hr>
+Readonly properties inherited from <a href="enum.html#EnumType">enum.EnumType</a>:<br>
+<dl><dt><strong>__members__</strong></dt>
+<dd><span class="code">Returns&nbsp;a&nbsp;mapping&nbsp;of&nbsp;member&nbsp;name-&gt;value.<br>
+&nbsp;<br>
+This&nbsp;mapping&nbsp;lists&nbsp;all&nbsp;enum&nbsp;members,&nbsp;including&nbsp;aliases.&nbsp;Note&nbsp;that&nbsp;this<br>
+is&nbsp;a&nbsp;read-only&nbsp;view&nbsp;of&nbsp;the&nbsp;internal&nbsp;mapping.</span></dd>
+</dl>
+</td></tr></table></td></tr></table>
+</body></html>

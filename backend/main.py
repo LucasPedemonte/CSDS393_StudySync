@@ -1,3 +1,5 @@
+"""FastAPI application for StudySync's backend APIs and scheduling logic."""
+
 from fastapi import FastAPI, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func, text, or_
@@ -238,6 +240,7 @@ def find_direct_conversation(db: Session, course_id: int, user_uid_1: str, user_
 
 
 def conversation_has_participant(db: Session, conversation_id: int, user_uid: str) -> bool:
+    """Return whether a user belongs to the specified conversation."""
     row = db.execute(
         text(
             """
@@ -254,6 +257,7 @@ def conversation_has_participant(db: Session, conversation_id: int, user_uid: st
 
 
 def get_other_participant_uid(db: Session, conversation_id: int, user_uid: str) -> Optional[str]:
+    """Return the other participant UID for a direct conversation."""
     row = db.execute(
         text(
             """

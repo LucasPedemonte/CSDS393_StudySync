@@ -45,6 +45,9 @@ The backend tests require:
 - `uvicorn`
 - `python-dotenv`
 
+The exported backend API documentation is generated with:
+- `pydoc` (Python standard library)
+
 ### Frontend
 Install Node dependencies from `frontend/package.json`.
 The frontend tests require:
@@ -56,30 +59,29 @@ The frontend tests require:
 ## How to run tests
 
 ### Backend test setup and execution
-1. Open PowerShell in the repo root.
+1. Open a terminal in the repo root.
 2. Change directory to the backend folder:
-   ```powershell
+   ```bash
    cd backend
    ```
 3. Create and activate a Python virtual environment:
-   ```powershell
-   python -m venv venv
-   .\venv\Scripts\activate
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate
    ```
 4. Install test dependencies:
-   ```powershell
+   ```bash
    pip install -r requirements.txt
-   pip install pytest hypothesis
    ```
 5. Create a dedicated PostgreSQL test database, for example `studysync_test`.
 6. Set environment variables before running tests:
-   ```powershell
-   set DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost/studysync_test
-   set ALLOW_DB_RESET_FOR_TESTS=1
+   ```bash
+   export DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost/studysync_test
+   export ALLOW_DB_RESET_FOR_TESTS=1
    ```
 7. Run the backend test suite:
-   ```powershell
-   pytest -q
+   ```bash
+   python -m pytest tests -q
    ```
 
 #### Notes
@@ -87,17 +89,17 @@ The frontend tests require:
 - The test suite will refuse to run against a non-test database unless `ALLOW_DB_RESET_FOR_TESTS=1` is set.
 
 ### Frontend test setup and execution
-1. Open PowerShell in the repo root.
+1. Open a terminal in the repo root.
 2. Change directory to the frontend folder:
-   ```powershell
+   ```bash
    cd frontend
    ```
 3. Install dependencies:
-   ```powershell
+   ```bash
    npm install
    ```
 4. Run React tests:
-   ```powershell
+   ```bash
    npm test -- --watchAll=false
    ```
 
@@ -106,7 +108,7 @@ The frontend tests require:
 - The current frontend tests are limited to a small number of component-level cases.
 - If the backend database URL points to a non-test database, tests will skip or fail unless `ALLOW_DB_RESET_FOR_TESTS=1` is explicitly set.
 - The test coverage is focused primarily on backend endpoints; there is no complete frontend end-to-end test suite present.
-- The repo does not currently include generated HTML API docs for testing or validation.
+- Generated HTML backend API docs are included at `docs/api/index.html`.
 
 ## My contributions for testing
 - Testing ownership: `anagomez`

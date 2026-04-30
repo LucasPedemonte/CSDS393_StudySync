@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Python: module ollama_helper</title>
+</head><body>
+
+<table class="heading">
+<tr class="heading-text decor">
+<td class="title">&nbsp;<br><strong class="title">ollama_helper</strong></td>
+<td class="extra"><a href=".">index</a><br><a href="file:/home/lap127/StudySyncGit/CSDS393_StudySync/backend/ollama_helper.py">/home/lap127/StudySyncGit/CSDS393_StudySync/backend/ollama_helper.py</a></td></tr></table>
+    <p><span class="code">Helpers&nbsp;for&nbsp;querying&nbsp;Ollama&nbsp;and&nbsp;constructing&nbsp;grounded&nbsp;AI&nbsp;prompts.</span></p>
+<p>
+<table class="section">
+<tr class="decor pkg-content-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Modules</strong></td></tr>
+    
+<tr><td class="decor pkg-content-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><table><tr><td class="multicolumn"><a href="os.html">os</a><br>
+</td><td class="multicolumn"><a href="requests.html">requests</a><br>
+</td><td class="multicolumn"></td><td class="multicolumn"></td></tr></table></td></tr></table><p>
+<table class="section">
+<tr class="decor functions-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Functions</strong></td></tr>
+    
+<tr><td class="decor functions-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt><a name="-build_context_prompt"><strong>build_context_prompt</strong></a>(user_question: str, db_context: dict) -&gt; str</dt><dd><span class="code">Build&nbsp;a&nbsp;grounded&nbsp;prompt&nbsp;that&nbsp;limits&nbsp;the&nbsp;model&nbsp;to&nbsp;known&nbsp;StudySync&nbsp;data.</span></dd></dl>
+ <dl><dt><a name="-query_ollama"><strong>query_ollama</strong></a>(prompt: str, model: str = 'llama2') -&gt; Optional[str]</dt><dd><span class="code">Send&nbsp;one&nbsp;prompt&nbsp;to&nbsp;the&nbsp;configured&nbsp;Ollama&nbsp;server&nbsp;and&nbsp;return&nbsp;its&nbsp;reply.</span></dd></dl>
+</td></tr></table><p>
+<table class="section">
+<tr class="decor data-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Data</strong></td></tr>
+    
+<tr><td class="decor data-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><strong>OLLAMA_API_URL</strong> = 'http://classt21:11434/api/generate'<br>
+<strong>Optional</strong> = typing.Optional</td></tr></table>
+</body></html>

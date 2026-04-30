@@ -1,3 +1,6 @@
+/**
+ * Home dashboard for listing enrolled classes and creating or joining courses.
+ */
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -16,7 +19,7 @@ const HomePage = () => {
   const [newCourseCode, setNewCourseCode] = useState("");
   const navigate = useNavigate();
 
-  // Fetch user profile to check for TA/Admin roles
+  /** Load the current user's profile to determine available actions. */
   const fetchProfile = useCallback(async (firebase_uid) => {
     try {
       const response = await fetch(`${API_BASE_URL}/user/${firebase_uid}`);
@@ -29,6 +32,7 @@ const HomePage = () => {
     }
   }, []);
 
+  /** Load the set of courses shown on the user's home dashboard. */
   const fetchUserCourses = useCallback(async (firebase_uid) => {
     if (!firebase_uid) return;
     try {
@@ -51,6 +55,7 @@ const HomePage = () => {
     return () => unsubscribe();
   }, [fetchUserCourses, fetchProfile]);
 
+  /** Submit a join-by-code request for the current user. */
   const handleJoinCourse = async (e) => {
     e.preventDefault();
     const user = auth.currentUser;
@@ -68,6 +73,7 @@ const HomePage = () => {
     }
   };
 
+  /** Submit a new course creation request for TA or admin users. */
   const handleCreateCourse = async (e) => {
     e.preventDefault();
     const user = auth.currentUser;

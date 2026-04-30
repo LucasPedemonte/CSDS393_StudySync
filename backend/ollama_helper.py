@@ -1,17 +1,13 @@
-"""
-Simple Ollama integration for AI chat
-"""
+"""Helpers for querying Ollama and constructing grounded AI prompts."""
+
 import requests
 from typing import Optional
 import os
 
-# Ollama runs on the GPU node (classt21)
 OLLAMA_API_URL = os.getenv("OLLAMA_API_URL", "http://classt21:11434/api/generate")
 
 def query_ollama(prompt: str, model: str = "llama2") -> Optional[str]:
-    """
-    Query Ollama locally running model
-    """
+    """Send one prompt to the configured Ollama server and return its reply."""
     try:
         response = requests.post(
             OLLAMA_API_URL,
@@ -32,9 +28,7 @@ def query_ollama(prompt: str, model: str = "llama2") -> Optional[str]:
 
 
 def build_context_prompt(user_question: str, db_context: dict) -> str:
-    """
-    Build a strict prompt that prevents hallucination
-    """
+    """Build a grounded prompt that limits the model to known StudySync data."""
     context_parts = []
     
     # User info

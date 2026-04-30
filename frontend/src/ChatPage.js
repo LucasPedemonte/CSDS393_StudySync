@@ -1,3 +1,6 @@
+/**
+ * Messaging interface for the global inbox and course-scoped chat views.
+ */
 import { useEffect, useState, useCallback} from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { useParams } from "react-router-dom";
@@ -24,7 +27,7 @@ const ChatPage = ({ isGlobal = true }) => {
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
 
-  // Load current user + profile
+  /** Load the visible chat roster for the current mode. */
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -83,6 +86,7 @@ const ChatPage = ({ isGlobal = true }) => {
     return () => unsubscribe();
   }, [isGlobal, courseId]);
 
+  /** Fetch messages for the active conversation selection. */
   const loadMessages = useCallback(async (currentUser, otherUser) => {
     if (!currentUser || !otherUser) return;
     try {
@@ -109,7 +113,6 @@ const ChatPage = ({ isGlobal = true }) => {
     }
   }, [courseId]);
 
-  // Initial + polling load of messages when selectedUser changes
   useEffect(() => {
     if (!authUser || !selectedUser) return;
     loadMessages(authUser, selectedUser);
@@ -119,7 +122,7 @@ const ChatPage = ({ isGlobal = true }) => {
     return () => clearInterval(interval);
   }, [authUser, selectedUser, loadMessages]);
 
-  // 2. Use conversation-specific course IDs
+  /** Send one message into the active direct or group conversation. */
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!authUser || !selectedUser || !newMessage.trim()) return;

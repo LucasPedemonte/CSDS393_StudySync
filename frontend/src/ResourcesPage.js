@@ -1,3 +1,6 @@
+/**
+ * Resource library for posting, voting on, and moderating class materials.
+ */
 import { useState, useEffect, useCallback } from "react";
 import { auth } from "./firebase";
 import { useParams } from "react-router-dom";
@@ -20,7 +23,7 @@ const ResourcesPage = () => {
     resource_link: "",
   });
 
-  // Get current user info
+  /** Load the current user profile used for resource actions. */
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
       if (firebaseUser) {
@@ -45,7 +48,7 @@ const ResourcesPage = () => {
     return () => unsubscribe();
   }, []);
 
-  // Fetch posts for this course
+  /** Fetch the visible resource posts for the active course. */
   const fetchPosts = useCallback(async () => {
     try {
       setLoading(true);
@@ -71,6 +74,7 @@ const ResourcesPage = () => {
     }
   }, [courseId, currentUser?.uid]);
 
+  /** Flag one post for TA or admin review. */
   const handleFlagPost = async (postId) => {
     if (!window.confirm("Are you sure you want to flag this post for review?"))
       return;
@@ -90,14 +94,13 @@ const ResourcesPage = () => {
     }
   };
 
-  // Initial fetch and refresh when user changes
   useEffect(() => {
     if (currentUser) {
       fetchPosts();
     }
   }, [currentUser, courseId, fetchPosts]);
 
-  // Handle form input change
+  /** Update local form state while clearing stale validation errors. */
   const handleFormChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -107,11 +110,10 @@ const ResourcesPage = () => {
     setFormError(null);
   };
 
-  // Handle post submission
+  /** Create one new resource post after client-side validation. */
   const handleCreatePost = async (e) => {
     e.preventDefault();
 
-    // Validate fields
     if (!formData.title.trim()) {
       setFormError("Please enter a title for your post.");
       return;
@@ -131,13 +133,11 @@ const ResourcesPage = () => {
 
     try {
       setIsSubmitting(true);
-      // Query parameters for metadata
       const params = new URLSearchParams({
         course_id: courseId || 0,
         author_uid: currentUser.uid,
       });
 
-      // JSON body for post content
       const response = await fetch(
         `${API_BASE_URL}/posts?${params.toString()}`,
         {
@@ -163,7 +163,7 @@ const ResourcesPage = () => {
     }
   };
 
-  // Handle voting: vote = +1 (upvote), -1 (downvote), 0 (neutral)
+  /** Apply an upvote, downvote, or neutral vote to a post. */
   const handleVote = async (postId, newVote) => {
     if (!currentUser) return;
     try {
@@ -172,7 +172,6 @@ const ResourcesPage = () => {
         { method: "POST" },
       );
       if (!response.ok) throw new Error("Failed to update vote");
-      // Optimistically update the post
       setPosts((prevPosts) =>
         prevPosts.map((post) => {
           if (post.id === postId) {
@@ -192,7 +191,7 @@ const ResourcesPage = () => {
     }
   };
 
-  // Format timestamp
+  /** Convert an ISO timestamp into a compact relative label. */
   const formatDate = (isoString) => {
     const date = new Date(isoString);
     const now = new Date();
@@ -209,7 +208,7 @@ const ResourcesPage = () => {
     return date.toLocaleDateString();
   };
 
-  // Get author initial for avatar
+  /** Return the avatar initial for a post author. */
   const getInitial = (name) => {
     return name ? name.charAt(0).toUpperCase() : "?";
   };
