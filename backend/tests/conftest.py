@@ -36,6 +36,7 @@ def db(_guard_test_db):
     """
     Provide a clean database for each test.
     """
+    import models  # noqa: F401, WPS433
     from database import engine, SessionLocal, Base  # noqa: WPS433
     from main import ensure_schema_updates  # noqa: WPS433
 
